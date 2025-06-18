@@ -1,0 +1,3811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Factory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #ffd700;
+            --secondary-color: #8b00ff;
+            --accent-color: #ff6b00;
+            --bg-primary: #0f0a0f;
+            --bg-secondary: #1f1a2e;
+            --bg-tertiary: #2a1f3d;
+            --text-primary: #fff7e6;
+            --text-secondary: #e6d5ff;
+            --neon-glow: 0 0 8px var(--primary-color), 0 0 15px var(--primary-color), 0 0 20px var(--primary-color);
+        }
+
+        .theme-neon-cyber {
+            --primary-color: #00ffff;
+            --secondary-color: #ff00ff;
+            --accent-color: #0080ff;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #151520;
+            --bg-tertiary: #202035;
+            --text-primary: #ffffff;
+            --text-secondary: #e0e0ff;
+        }
+
+        .theme-synthwave {
+            --primary-color: #ff0080;
+            --secondary-color: #8000ff;
+            --accent-color: #ff4000;
+            --bg-primary: #1a0a1a;
+            --bg-secondary: #2a1535;
+            --bg-tertiary: #3a2050;
+            --text-primary: #ffddff;
+            --text-secondary: #dd99dd;
+        }
+
+        .theme-matrix {
+            --primary-color: #00ff41;
+            --secondary-color: #008f11;
+            --accent-color: #40ff71;
+            --bg-primary: #0a0f0a;
+            --bg-secondary: #0f1f0f;
+            --bg-tertiary: #1a2f1a;
+            --text-primary: #88ff88;
+            --text-secondary: #66dd66;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .font-tech {
+            font-family: 'Courier Prime', monospace;
+        }
+        .neon-primary-glow {
+            text-shadow: 0 0 8px var(--primary-color), 0 0 15px var(--primary-color), 0 0 20px var(--primary-color);
+            box-shadow: 0 0 8px var(--primary-color), 0 0 15px var(--primary-color);
+            color: var(--primary-color);
+            transition: all 0.5s ease;
+        }
+
+        .neon-secondary-glow {
+            text-shadow: 0 0 8px var(--secondary-color), 0 0 15px var(--secondary-color), 0 0 20px var(--secondary-color);
+            box-shadow: 0 0 8px var(--secondary-color), 0 0 15px var(--secondary-color);
+            color: var(--secondary-color);
+            transition: all 0.5s ease;
+        }
+
+        .neon-accent-glow {
+            text-shadow: 0 0 8px var(--accent-color), 0 0 15px var(--accent-color), 0 0 20px var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color), 0 0 15px var(--accent-color);
+            color: var(--accent-color);
+            transition: all 0.5s ease;
+        }
+
+                .neon-blue-glow { 
+            text-shadow: 0 0 8px var(--primary-color), 0 0 15px var(--primary-color), 0 0 20px var(--primary-color);
+            box-shadow: 0 0 8px var(--primary-color), 0 0 15px var(--primary-color);
+            color: var(--primary-color);
+            transition: all 0.5s ease;
+        }
+        .neon-purple-glow { 
+            text-shadow: 0 0 8px var(--secondary-color), 0 0 15px var(--secondary-color), 0 0 20px var(--secondary-color);
+            box-shadow: 0 0 8px var(--secondary-color), 0 0 15px var(--secondary-color);
+            color: var(--secondary-color);
+            transition: all 0.5s ease;
+        }
+        .neon-green-glow {
+            text-shadow: 0 0 8px var(--accent-color), 0 0 15px var(--accent-color), 0 0 20px var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color), 0 0 15px var(--accent-color);
+            color: var(--accent-color);
+            transition: all 0.5s ease;
+        }
+        .panel-header {
+            background-color: var(--bg-tertiary);
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: background-color 0.5s ease;
+        }
+        .panel-header h3 {
+            margin-bottom: 0;
+        }
+
+        .panel {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary)) !important;
+            border-color: var(--primary-color) !important;
+            transition: all 0.5s ease;
+        }
+        #research-tree {
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #333;
+        }
+        #research-tree::-webkit-scrollbar {
+            width: 8px;
+        }
+        #research-tree::-webkit-scrollbar-track {
+            background: #333;
+        }
+        #research-tree::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
+            border: 2px solid #333;
+        }
+
+        .factory-belt-container {
+            position: relative;
+            height: 100%;
+            flex-grow: 1;
+            border-right: 2px solid #4a4a4a;
+        }
+        .factory-belt-container:last-child {
+            border-right: none;
+        }
+
+        .conveyor-belt {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            background-image: repeating-linear-gradient(
+                0deg,
+                #2a2a2a 0px,
+                #2a2a2a 30px,
+                #3a3a3a 30px,
+                #3a3a3a 60px
+            );
+            background-size: 100% 60px;
+            animation: conveyor-move 2s linear infinite;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        @keyframes conveyor-move {
+            from { background-position-y: 0; }
+            to { background-position-y: 60px; }
+        }
+
+        @keyframes float-income {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
+        }
+
+        .income-float {
+            position: absolute;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00ff41;
+            animation: float-income 1.5s ease-out forwards;
+            pointer-events: none; /* Allow clicking through */
+            z-index: 20;
+        }
+
+        @keyframes particle-fade-out {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0.1); opacity: 0; }
+        }
+
+        .particle {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: particle-fade-out 0.8s ease-out forwards;
+            z-index: 25;
+        }
+
+        .particle.success { background-color: #00ffff; }
+        .particle.failure { background-color: #ff0000; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #2a2a2a;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid #ff0000;
+            box-shadow: 0 0 20px #ff0000, inset 0 0 10px #ff0000;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            color: #ff0000;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ff0000;
+        }
+
+        .modal-content p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+
+        .modal-buttons button {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .modal-buttons button:hover {
+            background-color: #5a5a5a;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-buttons button.confirm {
+            background-color: #ff0000;
+            box-shadow: 0 0 15px #ff0000;
+        }
+        .modal-buttons button.confirm:hover {
+            background-color: #e00000;
+            box-shadow: 0 0 20px #ff0000;
+        }
+
+        .qc-checkpoint {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background-color: rgba(0, 255, 255, 0.2);
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 5;
+            color: var(--primary-color);
+            font-weight: bold;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .qc-checkpoint:hover {
+            background-color: rgba(0, 255, 255, 0.4);
+            border-color: var(--primary-color);
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        .qc-checkpoint.qc-success {
+            background-color: #00ff41;
+            border-color: #00ff41;
+            color: #000;
+            box-shadow: 0 0 15px #00ff41;
+        }
+
+        .qc-checkpoint.qc-failure {
+            background-color: #ff0000;
+            border-color: #ff0000;
+            color: #fff;
+            box-shadow: 0 0 15px #ff0000;
+        }
+
+        .qc-result-text {
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .qc-accepted {
+            color: #00ff41;
+        }
+
+        .qc-rejected {
+            color: #ff0000;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--bg-tertiary);
+            border-radius: 5px;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+            transition: background-color 0.5s ease;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 5px;
+            transition: width 0.1s linear, background-color 0.5s ease;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #eee;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 50;
+        }
+
+        .has-tooltip:hover .tooltip {
+            opacity: 1;
+        }
+
+        .era-selector button {
+            padding: 8px 15px;
+            border-radius: 6px;
+            background-color: #3a3a3a;
+            color: #eee;
+            margin: 0 5px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .era-selector button.active {
+            border-color: var(--current-accent-color, #00ffff);
+            background-color: var(--current-accent-color, #00ffff)20;
+            color: var(--current-accent-color, #00ffff);
+            box-shadow: 0 0 10px var(--current-accent-color, #00ffff);
+        }
+
+        .era-selector button:hover:not(.active) {
+            border-color: #8a2be2;
+            color: #8a2be2;
+            box-shadow: 0 0 5px #8a2be2;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicks to pass through to underlying elements if needed */
+        }
+
+        #background-canvas {
+            z-index: 0;
+        }
+
+        #workers-canvas {
+            z-index: 1;
+        }
+
+        .belt-canvas {
+            z-index: 3;
+            pointer-events: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+
+        .factory-belt-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .adv-tab-btn {
+            flex-grow: 1;
+            padding: 10px;
+            cursor: pointer;
+            background-color: var(--bg-secondary);
+            border: none;
+            color: var(--text-secondary);
+            font-weight: bold;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .adv-tab-btn.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+            background-color: var(--bg-tertiary);
+        }
+
+        .adv-tab-btn:hover:not(.active) {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .completed-robot {
+            position: absolute;
+            bottom: 20px;
+            width: 40px;
+            height: 60px;
+            animation: walk-off 8s linear forwards;
+            z-index: 100;
+        }
+        
+        .completed-robot .head {
+            width: 20px;
+            height: 20px;
+            background: #ccc;
+            border-radius: 50%;
+            margin: 0 auto;
+            border: 2px solid var(--current-accent-color, #00ffff);
+        }
+        
+        .completed-robot .body {
+            width: 30px;
+            height: 30px;
+            background: #999;
+            margin: 2px auto;
+        }
+        
+        .completed-robot .legs {
+            width: 30px;
+            height: 10px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .completed-robot .leg {
+            width: 8px;
+            height: 10px;
+            background: #666;
+            animation: walking 0.5s linear infinite;
+        }
+        
+        .completed-robot .leg:nth-child(2) {
+            animation-delay: 0.25s;
+        }
+
+        @keyframes walk-off {
+            from { transform: translateX(-60px); }
+            to { transform: translateX(1200px); }
+        }
+        
+        @keyframes walking {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
+        /* QC Result floating animation */
+        @keyframes float-result {
+            0% { 
+                transform: translateX(-50%) translateY(0) scale(1); 
+                opacity: 1; 
+            }
+            100% { 
+                transform: translateX(-50%) translateY(-30px) scale(1.2); 
+                opacity: 0; 
+            }
+        }
+
+        /* Pulse animation for notifications */
+        @keyframes pulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1); 
+                box-shadow: 0 0 30px #ffd700; 
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.05); 
+                box-shadow: 0 0 50px #ffd700; 
+            }
+        }
+
+        /* Worker styling */
+        .workers-column {
+            min-height: 100%;
+        }
+
+        .worker {
+            width: 40px;
+            height: 50px;
+            border: 2px solid #000;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 5px 0;
+            position: relative;
+            animation: worker-idle 3s ease-in-out infinite;
+        }
+
+        .worker-tech {
+            background: transparent;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .worker-maintenance {
+            background: transparent;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .worker-supervisor {
+            background: transparent;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .worker::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            margin-bottom: 2px;
+            border: 2px solid #000;
+        }
+
+        .worker::after {
+            content: '';
+            width: 16px;
+            height: 20px;
+            background: transparent;
+            border: 2px solid var(--text-secondary);
+            border-radius: 4px;
+        }
+
+        @keyframes worker-idle {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-2px) scale(1.02); }
+        }
+
+        .worker.working {
+            animation: worker-working 1s ease-in-out infinite;
+        }
+
+        @keyframes worker-working {
+            0%, 100% { transform: translateX(0px) scale(1); }
+            25% { transform: translateX(-1px) scale(1.05); }
+            75% { transform: translateX(1px) scale(1.05); }
+        }
+
+        /* Theme notification animation */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Theme card hover effects */
+        .theme-card {
+            transition: all 0.3s ease;
+        }
+
+        .theme-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-preview {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .theme-card:hover .theme-preview {
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="font-tech h-screen flex flex-col">
+    <div id="era-selector" class="w-full py-4 shadow-lg flex flex-col justify-center items-center gap-4 z-50 relative" style="background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary)); border-bottom: 1px solid var(--primary-color);">
+        
+        <button id="theme-button" onclick="openThemeModal()" class="absolute top-4 left-4 px-4 py-2 rounded-lg font-bold transition-all shadow-lg" style="background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); color: var(--text-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+            🎨 Themes
+        </button>
+        
+        <div id="factory-title" class="text-3xl font-bold neon-primary-glow mr-4 p-2">ROBOT FACTORY</div>
+        <div>
+            <button id="money-button" onclick="addMoney()" class="px-4 py-2 rounded mr-2 transition-colors font-bold" style="background-color: var(--accent-color); color: var(--bg-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">💰 +$5000</button>
+            <button onclick="billionairesSon()" class="px-4 py-2 rounded mr-2 font-bold" style="background-color: var(--secondary-color); color: var(--text-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Billionaire's Son</button>
+            <button onclick="spawnTestParts()" class="px-4 py-2 rounded mr-2 font-bold" style="background-color: var(--accent-color); color: var(--bg-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Spawn Parts</button>
+            <button onclick="resetGame()" class="px-4 py-2 rounded font-bold" style="background-color: var(--primary-color); color: var(--bg-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Reset Game</button>
+        </div>
+    </div>
+
+    <div id="game-container" class="flex flex-1 w-full overflow-hidden relative">
+                <div id="factory-floor" class="relative w-2/3 border-r flex flex-col p-4 overflow-hidden z-10" style="background-color: var(--bg-primary); border-color: var(--bg-tertiary);">
+        <canvas id="background-canvas" class="canvas-overlay"></canvas>
+            <h2 class="text-2xl font-bold neon-accent-glow mb-4 text-center">ASSEMBLY LINES</h2>
+            <div id="conveyor-belts-container" class="flex-1 flex flex-row">
+                
+                <div class="workers-column flex flex-col justify-evenly items-center px-2" style="width: 60px;">
+                    
+                </div>
+                
+                <div class="factory-belt-container">
+                    <div id="belt-1" class="conveyor-belt has-tooltip">
+                        <span class="tooltip">Heads Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">HEADS</span>
+                    </div>
+                    <canvas id="belt-canvas-head" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="head">QC</div>
+                </div>
+                
+                
+                <div class="workers-column flex flex-col justify-evenly items-center px-2" style="width: 60px;">
+                    
+                </div>
+                
+                <div class="factory-belt-container">
+                    <div id="belt-2" class="conveyor-belt has-tooltip">
+                        <span class="tooltip">Chests Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">CHESTS</span>
+                    </div>
+                    <canvas id="belt-canvas-chest" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="chest">QC</div>
+                </div>
+                
+                
+                <div class="workers-column flex flex-col justify-evenly items-center px-2" style="width: 60px;">
+                    
+                </div>
+                
+                <div class="factory-belt-container">
+                    <div id="belt-3" class="conveyor-belt has-tooltip">
+                        <span class="tooltip">Arms Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">ARMS</span>
+                    </div>
+                    <canvas id="belt-canvas-arm" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="arm">QC</div>
+                </div>
+                
+                
+                <div class="workers-column flex flex-col justify-evenly items-center px-2" style="width: 60px;">
+                    
+                </div>
+                
+                <div class="factory-belt-container">
+                    <div id="belt-4" class="conveyor-belt has-tooltip">
+                        <span class="tooltip">Legs Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">LEGS</span>
+                    </div>
+                    <canvas id="belt-canvas-leg" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="leg">QC</div>
+                </div>
+                
+                
+                <div class="workers-column flex flex-col justify-evenly items-center px-2" style="width: 60px;">
+                    
+                </div>
+            </div>
+            <div id="assembly-area" class="absolute bottom-0 left-0 w-full h-24 bg-transparent z-20 overflow-hidden pointer-events-none">
+                
+            </div>
+        </div>
+
+        <div id="management-panels" class="relative w-1/3 p-4 flex flex-col space-y-4 overflow-y-auto custom-scrollbar z-10" style="background-color: var(--bg-secondary);">
+            <div class="panel p-6 rounded-xl shadow-lg">
+                <div class="panel-header">
+                    <h3 class="text-xl font-bold neon-primary-glow">GLOBAL METRICS</h3>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm" style="color: var(--text-primary);">
+                    <div>Money: <span id="money" class="neon-accent-glow">$0</span></div>
+                    <div>Efficiency: <span id="efficiency">100%</span></div>
+                    </div>
+            </div>
+
+            <div id="sales-panel" class="panel p-6 rounded-xl shadow-lg">
+                <div class="panel-header">
+                    <h3 class="text-xl font-bold neon-accent-glow">SALES & ASSEMBLY</h3>
+                </div>
+                <div class="space-y-4" style="color: var(--text-primary);">
+                    <div class="text-lg">Assembled Robots: <span id="robots-assembled" class="font-bold" style="color: var(--accent-color);">0</span></div>
+                    <button id="sell-robots-btn" class="w-full font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-200 disabled:cursor-not-allowed" style="background-color: var(--accent-color); color: var(--bg-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        Sell Robots
+                    </button>
+                    <div class="text-center text-sm" style="color: var(--text-secondary);">Potential Income: <span id="potential-income" style="color: var(--accent-color);">$0</span></div>
+                </div>
+            </div>
+            
+            <div class="panel p-6 rounded-xl shadow-lg">
+                <div class="panel-header">
+                    <h3 class="text-xl font-bold neon-primary-glow">PARTS INVENTORY</h3>
+                </div>
+                <div id="parts-inventory" class="grid grid-cols-1 gap-4 text-sm" style="color: var(--text-primary);">
+                    <div>
+                        <div class="flex justify-between"><span>Heads:</span> <span id="heads-stock">0 / 10</span></div>
+                        <div class="progress-bar-container mt-1"><div id="heads-progress" class="progress-bar" style="background-color: var(--primary-color);"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between"><span>Chests:</span> <span id="chests-stock">0 / 10</span></div>
+                        <div class="progress-bar-container mt-1"><div id="chests-progress" class="progress-bar" style="background-color: var(--secondary-color);"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between"><span>Arms:</span> <span id="arms-stock">0 / 20</span></div>
+                        <div class="progress-bar-container mt-1"><div id="arms-progress" class="progress-bar" style="background-color: var(--accent-color);"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between"><span>Legs:</span> <span id="legs-stock">0 / 20</span></div>
+                        <div class="progress-bar-container mt-1"><div id="legs-progress" class="progress-bar" style="background-color: var(--primary-color);"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-6 rounded-xl shadow-lg">
+                <div class="panel-header">
+                    <h3 class="text-xl font-bold neon-primary-glow">ADVANCEMENTS</h3>
+                </div>
+                
+                <div class="flex mb-4" style="border-bottom: 1px solid var(--bg-tertiary);">
+                    <button id="adv-tab-research" class="adv-tab-btn active">Research</button>
+                    <button id="adv-tab-prestige" class="adv-tab-btn">Prestige</button>
+                </div>
+                 
+                <div id="research-view">
+                    <div id="research-tree" class="space-y-3">
+                        
+                    </div>
+                </div>
+                <div id="prestige-view" class="hidden">
+                     <div class="text-center mb-4">
+                        <p class="text-lg" style="color: var(--text-secondary);">You have <span id="prestige-points" class="font-bold" style="color: var(--accent-color);">0</span> Prestige Points.</p>
+                        <button id="prestige-btn" class="w-full mt-2 font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200 disabled:cursor-not-allowed" style="background-color: var(--secondary-color); color: var(--text-primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Prestige Now</button>
+                   </div>
+                   <div id="prestige-tree" class="space-y-3">
+                       
+                   </div>
+                </div>
+            </div>
+
+            <div class="panel p-6 rounded-xl shadow-lg">
+                <div class="panel-header">
+                    <h3 class="text-xl font-bold neon-primary-glow">INSURANCE</h3>
+                </div>
+                <div id="insurance-panel" class="space-y-3">
+                    <div class="text-sm" style="color: var(--text-secondary);">
+                        Premiums Due: <span id="premiums-due" style="color: var(--accent-color);">$0</span>
+                    </div>
+                    <div id="insurance-policies" class="space-y-2">
+                    </div>
+                    <div id="active-policies" class="mt-4">
+                        <h4 class="font-bold mb-2" style="color: var(--primary-color);">Active Policies:</h4>
+                        <div id="active-policies-list" class="text-sm" style="color: var(--text-secondary);">None</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-6 rounded-xl shadow-lg">
+                <div class="panel-header">
+                    <h3 class="text-xl font-bold neon-primary-glow">PRODUCTION TRENDS</h3>
+                </div>
+                <canvas id="production-chart" class="w-full h-48 rounded-lg" style="background-color: var(--bg-primary); border: 1px solid var(--bg-tertiary);"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="catastrophe-indicator" class="fixed bottom-5 right-5 bg-red-700 text-white p-4 rounded-lg shadow-2xl cursor-pointer hidden z-[900] border-2 border-red-400 hover:bg-red-600 transition-all duration-300 ease-in-out flex flex-col items-start group">
+        <div class="flex items-center">
+            <svg class="w-6 h-6 mr-2 animate-ping group-hover:animate-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span class="font-bold text-lg">System Alert!</span>
+        </div>
+        <p class="text-sm mt-1 ml-8 group-hover:block hidden">Potential disruption. Click for details.</p>
+    </div>
+
+    
+    <div id="catastrophe-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="catastrophe-title" class="text-red-500 neon-blue-glow">CATASTROPHE!</h2>
+            <p id="catastrophe-message" class="text-lg mb-6"></p>
+            <div id="catastrophe-buttons" class="modal-buttons">
+                
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="qc-analysis-modal" class="modal">
+        <div class="modal-content" style="border-color: #00ffff; box-shadow: 0 0 20px #00ffff, inset 0 0 10px #00ffff;">
+            <h2 id="qc-modal-title" class="text-[#00ffff] neon-blue-glow">Quality Analysis</h2>
+            <p class="text-sm text-gray-400 mb-4">Showing the trend of the last 100 processed parts.</p>
+            <canvas id="qc-analysis-chart" class="w-full h-64 bg-[#1f1f1f] rounded-lg border border-gray-600"></canvas>
+            <div class="modal-buttons mt-6">
+                <button id="qc-modal-close-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="theme-modal" class="modal">
+        <div class="modal-content" style="border-color: #8a2be2; box-shadow: 0 0 20px #8a2be2, inset 0 0 10px #8a2be2; max-width: 600px;">
+            <h2 class="neon-secondary-glow mb-6">🎨 Factory Themes</h2>
+            <p class="text-sm text-gray-400 mb-6">Transform your factory's appearance with these premium themes. Purchase with Prestige Points!</p>
+            
+            <div id="theme-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                
+            </div>
+            
+            <div class="modal-buttons">
+                <button onclick="closeThemeModal()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="main-content" class="mt-4">
+        
+        <div id="factory-floor">
+            <div id="factory-container" class="grid grid-cols-4 gap-2 bg-[#0d0d0d] p-4 rounded-lg relative overflow-hidden">
+                <div class="factory-belt-container overflow-hidden">
+                    <div id="belt-1" class="conveyor-belt has-tooltip overflow-hidden">
+                        <span class="tooltip">Heads Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">HEADS</span>
+                    </div>
+                    <canvas id="belt-canvas-head" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="head">QC</div>
+                </div>
+                <div class="factory-belt-container overflow-hidden">
+                    <div id="belt-2" class="conveyor-belt has-tooltip overflow-hidden">
+                        <span class="tooltip">Chests Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">CHESTS</span>
+                    </div>
+                    <canvas id="belt-canvas-chest" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="chest">QC</div>
+                </div>
+                <div class="factory-belt-container overflow-hidden">
+                    <div id="belt-3" class="conveyor-belt has-tooltip overflow-hidden">
+                        <span class="tooltip">Arms Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">ARMS</span>
+                    </div>
+                    <canvas id="belt-canvas-arm" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="arm">QC</div>
+                </div>
+                    <div class="factory-belt-container overflow-hidden">
+                    <div id="belt-4" class="conveyor-belt has-tooltip overflow-hidden">
+                        <span class="tooltip">Legs Production</span>
+                        <span class="text-white z-10 p-2 rounded-full bg-gray-700 text-sm absolute top-2 left-1/2 -translate-x-1/2">LEGS</span>
+                    </div>
+                    <canvas id="belt-canvas-leg" class="belt-canvas"></canvas>
+                    <div class="qc-checkpoint" data-belt-type="leg">QC</div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="research-view" class="hidden">
+            <div id="research-tree" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+            </div>
+        </div>
+
+        
+        <div id="prestige-view" class="hidden">
+            <div class="bg-[#1f1f1f] p-4 rounded-lg shadow-md mb-4 text-center">
+                <h3 class="text-2xl font-bold text-purple-400">Prestige Upgrades</h3>
+                <p class="text-lg text-gray-300">You have <span id="prestige-points" class="font-bold text-yellow-400">0</span> Prestige Points.</p>
+            </div>
+            <div id="prestige-tree" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to get current theme colors
+        function getCurrentThemeColors() {
+            const currentTheme = gameState.themes?.current || 'default';
+            const theme = themes[currentTheme];
+            return theme.colors;
+        }
+
+        // Helper function to convert hex to RGB for rgba usage
+        function hexToRgb(hex) {
+            // Remove # if present
+            if (hex.startsWith('#')) {
+                hex = hex.slice(1);
+            }
+            
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
+        // Game State Management
+        const gameState = {
+            money: 2000, // Start with some money for testing
+            partsInventory: {
+                head: { current: 0, max: 10 },
+                chest: { current: 0, max: 10 },
+                arm: { current: 0, max: 20 },
+                leg: { current: 0, max: 20 }
+            },
+            robotsAssembled: 0,
+            efficiency: 100,
+            qualityMultiplier: 1,
+            era: 'Steam',
+            prestigePoints: 0,
+            research: {
+                purchased: [], // List of purchased research IDs
+                enabled: []    // List of currently enabled research IDs
+            },
+            production: {
+                ratesPerSecond: {
+                    head: 0.5,
+                    chest: 0.5,
+                    arm: 1,
+                    leg: 1
+                },
+                qualityChance: 0.8
+            },
+            belts: {
+                head: { parts: [], spawnTimer: 0 },
+                chest: { parts: [], spawnTimer: 0 },
+                arm: { parts: [], spawnTimer: 0 },
+                leg: { parts: [], spawnTimer: 0 }
+            },
+            lastUpdate: Date.now(),
+            catastrophe: null,
+            statistics: {
+                totalRobots: 0,
+                totalIncome: 0,
+                productionHistory: []
+            },
+            themes: {
+                purchased: ['default'],
+                current: 'default'
+            },
+            insurance: {
+                policies: [],
+                premiumsDue: 0,
+                lastPremiumTime: Date.now()
+            }
+        };
+
+        const insurancePolicies = {
+            'basic-protection': {
+                name: 'Basic Protection',
+                cost: 1000,
+                monthlyPremium: 100,
+                coverage: ['Power Outage'],
+                description: 'Protects against power outages'
+            },
+            'comprehensive': {
+                name: 'Comprehensive Coverage',
+                cost: 2500,
+                monthlyPremium: 200,
+                coverage: ['Power Outage', 'Conveyor Jam'],
+                description: 'Protects against power outages and conveyor jams'
+            },
+            'premium-protection': {
+                name: 'Premium Protection',
+                cost: 5000,
+                monthlyPremium: 350,
+                coverage: ['Power Outage', 'Conveyor Jam', 'Quality Crisis'],
+                description: 'Full protection against all catastrophes'
+            }
+        };
+
+        let productionWorker = null;
+        let workerSupported = typeof Worker !== 'undefined';
+
+        function initWebWorker() {
+            if (!workerSupported) return;
+            
+            const workerScript = `
+                let gameData = null;
+                let lastUpdate = Date.now();
+                
+                self.onmessage = function(e) {
+                    const { type, data } = e.data;
+                    
+                    switch(type) {
+                        case 'init':
+                            gameData = data;
+                            lastUpdate = Date.now();
+                            break;
+                            
+                        case 'update':
+                            if (gameData) {
+                                const now = Date.now();
+                                const deltaTime = (now - lastUpdate) / 1000;
+                                lastUpdate = now;
+                                
+                                updateProduction(deltaTime);
+                                updateInsurance(deltaTime);
+                                
+                                self.postMessage({
+                                    type: 'productionUpdate',
+                                    data: gameData
+                                });
+                            }
+                            break;
+                            
+                        case 'syncData':
+                            gameData = data;
+                            break;
+                    }
+                };
+                
+                function updateProduction(deltaTime) {
+                    Object.keys(gameData.belts).forEach(type => {
+                        const belt = gameData.belts[type];
+                        belt.spawnTimer += deltaTime;
+                        
+                        const spawnRate = gameData.production.ratesPerSecond[type];
+                        if (spawnRate > 0 && belt.spawnTimer >= (1 / spawnRate)) {
+                            belt.spawnTimer = 0;
+                            self.postMessage({
+                                type: 'spawnPart',
+                                data: { type: type }
+                            });
+                        }
+                    });
+                }
+                
+                function updateInsurance(deltaTime) {
+                    const now = Date.now();
+                    const timeSinceLastPremium = now - gameData.insurance.lastPremiumTime;
+                    const monthInMs = 30 * 24 * 60 * 60 * 1000;
+                    
+                    if (timeSinceLastPremium >= monthInMs) {
+                        let totalPremiums = 0;
+                        gameData.insurance.policies.forEach(policyId => {
+                            const policy = gameData.insurancePolicies[policyId];
+                            if (policy) {
+                                totalPremiums += policy.monthlyPremium;
+                            }
+                        });
+                        
+                        gameData.insurance.premiumsDue += totalPremiums;
+                        gameData.insurance.lastPremiumTime = now;
+                        
+                        self.postMessage({
+                            type: 'premiumsDue',
+                            data: { amount: totalPremiums }
+                        });
+                    }
+                }
+            `;
+            
+            const blob = new Blob([workerScript], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            productionWorker = new Worker(workerUrl);
+            
+                         productionWorker.onmessage = function(e) {
+                 const { type, data } = e.data;
+                 
+                 switch(type) {
+                     case 'productionUpdate':
+                         gameState.belts = data.belts;
+                         gameState.insurance = data.insurance;
+                         break;
+                         
+                     case 'spawnPart':
+                         handleWorkerSpawnPart(data.type);
+                         break;
+                         
+                     case 'premiumsDue':
+                         showInsuranceNotification(`Insurance premiums due: $${data.amount}`);
+                         break;
+                 }
+             };
+            
+            productionWorker.postMessage({
+                type: 'init',
+                data: { ...gameState, insurancePolicies }
+            });
+        }
+
+        function handleWorkerSpawnPart(type) {
+            const canvas = document.getElementById(`belt-canvas-${type}`);
+            if (canvas && canvas.width > 0) {
+                const partWidth = 40;
+                const minX = partWidth / 2;
+                const maxX = canvas.width - partWidth / 2;
+                const x = Math.random() * (maxX - minX) + minX;
+                
+                const part = new Part(type, x, 30);
+                gameState.belts[type].parts.push(part);
+            }
+        }
+
+        function syncWorkerData() {
+            if (productionWorker) {
+                productionWorker.postMessage({
+                    type: 'syncData',
+                    data: { ...gameState, insurancePolicies }
+                });
+            }
+        }
+
+        function purchaseInsurance(policyId) {
+            const policy = insurancePolicies[policyId];
+            if (!policy || gameState.money < policy.cost || gameState.insurance.policies.includes(policyId)) {
+                return false;
+            }
+            
+            gameState.money -= policy.cost;
+            gameState.insurance.policies.push(policyId);
+            
+            showInsuranceNotification(`Purchased ${policy.name} insurance policy!`);
+            updateInsuranceUI();
+            syncWorkerData();
+            return true;
+        }
+
+        function payPremiums() {
+            if (gameState.money >= gameState.insurance.premiumsDue) {
+                gameState.money -= gameState.insurance.premiumsDue;
+                gameState.insurance.premiumsDue = 0;
+                showInsuranceNotification('Insurance premiums paid!');
+                updateInsuranceUI();
+            } else {
+                showInsuranceNotification('Insufficient funds to pay premiums!');
+            }
+        }
+
+        function isProtectedByCatastrophe(catastropheName) {
+            return gameState.insurance.policies.some(policyId => {
+                const policy = insurancePolicies[policyId];
+                return policy && policy.coverage.includes(catastropheName);
+            });
+        }
+
+        function showInsuranceNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 120px;
+                right: 20px;
+                background: linear-gradient(45deg, #0080ff, #0040aa);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 0 20px rgba(0, 128, 255, 0.5);
+                animation: slideInRight 0.5s ease-out;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        function updateInsuranceUI() {
+            const policiesContainer = document.getElementById('insurance-policies');
+            const activePoliciesList = document.getElementById('active-policies-list');
+            const premiumsDueElement = document.getElementById('premiums-due');
+            
+            if (!policiesContainer) return;
+            
+            policiesContainer.innerHTML = '';
+            
+            Object.keys(insurancePolicies).forEach(policyId => {
+                const policy = insurancePolicies[policyId];
+                const isOwned = gameState.insurance.policies.includes(policyId);
+                const canAfford = gameState.money >= policy.cost;
+                
+                const policyElement = document.createElement('div');
+                policyElement.className = 'p-3 rounded border transition-all';
+                policyElement.style.cssText = `
+                    border-color: ${isOwned ? 'var(--accent-color)' : canAfford ? 'var(--primary-color)' : 'var(--bg-tertiary)'};
+                    background-color: ${isOwned ? 'rgba(255, 107, 0, 0.1)' : 'var(--bg-tertiary)'};
+                `;
+                
+                policyElement.innerHTML = `
+                    <div class="font-bold mb-1" style="color: ${isOwned ? 'var(--accent-color)' : 'var(--primary-color)'};">
+                        ${policy.name} ${isOwned ? '✓' : ''}
+                    </div>
+                    <div class="text-xs mb-2" style="color: var(--text-secondary);">${policy.description}</div>
+                    <div class="text-xs mb-2" style="color: var(--text-secondary);">Premium: $${policy.monthlyPremium}/month</div>
+                    ${!isOwned ? `
+                        <button onclick="purchaseInsurance('${policyId}')" 
+                                ${!canAfford ? 'disabled' : ''}
+                                class="w-full py-1 px-2 rounded text-xs font-bold transition-colors"
+                                style="background-color: ${canAfford ? 'var(--secondary-color)' : 'var(--bg-tertiary)'}; color: var(--text-primary);">
+                            Buy - $${policy.cost}
+                        </button>
+                    ` : ''}
+                `;
+                
+                policiesContainer.appendChild(policyElement);
+            });
+            
+            if (activePoliciesList) {
+                if (gameState.insurance.policies.length === 0) {
+                    activePoliciesList.textContent = 'None';
+                } else {
+                    activePoliciesList.innerHTML = gameState.insurance.policies.map(policyId => {
+                        const policy = insurancePolicies[policyId];
+                        return `<div class="text-xs">${policy.name}</div>`;
+                    }).join('');
+                }
+            }
+            
+            if (premiumsDueElement) {
+                premiumsDueElement.textContent = `$${gameState.insurance.premiumsDue}`;
+                if (gameState.insurance.premiumsDue > 0) {
+                    premiumsDueElement.parentElement.innerHTML += `
+                        <button onclick="payPremiums()" 
+                                class="ml-2 px-2 py-1 rounded text-xs font-bold"
+                                style="background-color: var(--accent-color); color: var(--bg-primary);">
+                            Pay Now
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        // Research Tree Configuration
+        const researchTree = {
+            'speed-boost': {
+                name: 'Speed Boost',
+                cost: 500,
+                description: 'Increase production speed by 50%',
+                purchased: false,
+                enabled: false,
+                baseRates: null // Store original rates
+            },
+            'quality-improvement': {
+                name: 'Quality Control',
+                cost: 1000,
+                description: 'Improve QC success rate to 95%',
+                purchased: false,
+                enabled: false,
+                baseQuality: 0.8 // Store original quality
+            },
+            'auto-inspection': {
+                name: 'Auto Inspector',
+                cost: 2000,
+                description: 'Automatic quality checks near checkpoints',
+                purchased: false,
+                enabled: false
+            },
+            'income-multiplier': {
+                name: 'Premium Sales',
+                cost: 3000,
+                description: 'Triple robot sale price',
+                purchased: false,
+                enabled: false,
+                baseMultiplier: 1 // Store original multiplier
+            },
+            'efficiency-boost': {
+                name: 'Factory Optimization',
+                cost: 1500,
+                description: 'Increase overall efficiency to 150%',
+                purchased: false,
+                enabled: false,
+                baseEfficiency: 100
+            },
+            'inventory-expansion': {
+                name: 'Storage Upgrade',
+                cost: 2500,
+                description: 'Double all inventory capacities',
+                purchased: false,
+                enabled: false,
+                baseCapacities: null
+            },
+            'rapid-assembly': {
+                name: 'Rapid Assembly',
+                cost: 4000,
+                description: 'Robots assemble 3x faster',
+                purchased: false,
+                enabled: false
+            },
+            'prestige-unlock': {
+                name: 'Era Advancement',
+                cost: 10000,
+                description: 'Unlock prestige system',
+                purchased: false,
+                enabled: false
+            }
+        };
+
+        // Catastrophe System
+        const catastropheTypes = [
+            {
+                name: 'Power Outage',
+                description: 'Production halted for 30 seconds',
+                duration: 30000,
+                effect: () => {
+                    Object.keys(gameState.production.ratesPerSecond).forEach(part => {
+                        gameState.production.ratesPerSecond[part] = 0;
+                    });
+                }
+            },
+            {
+                name: 'Conveyor Jam',
+                description: 'Belt speed reduced by 75%',
+                duration: 20000,
+                effect: () => {
+                    Object.keys(gameState.production.ratesPerSecond).forEach(part => {
+                        gameState.production.ratesPerSecond[part] *= 0.25;
+                    });
+                }
+            },
+            {
+                name: 'Quality Crisis',
+                description: 'Success rate drops to 20%',
+                duration: 25000,
+                effect: () => {
+                    gameState.production.qualityChance = 0.2;
+                }
+            }
+        ];
+
+        // Canvas and Animation Management
+        let canvases = {};
+        let productionChart = null;
+        let backgroundWorkers = [];
+        let backgroundCtx = null;
+        let lastMoneyAmount = 0;
+
+        // Money button timer system
+        let moneyButtonCooldown = 0;
+        let moneyButtonTimer = null;
+
+        // Theme System Configuration
+        const themes = {
+            'default': {
+                name: 'Cyberpunk Classic',
+                description: 'Electric yellow and vibrant purple cyberpunk aesthetic',
+                cost: 0,
+                cssClass: '',
+                colors: {
+                    primary: '#ffd700',
+                    secondary: '#8b00ff',
+                    accent: '#ff6b00'
+                },
+                preview: 'linear-gradient(135deg, #ffd700, #8b00ff, #ff6b00)'
+            },
+            'neon-cyber': {
+                name: 'Neon Cyber',
+                description: 'Ultra-bright cyber vibes with cyan and magenta neon lights',
+                cost: 25,
+                cssClass: 'theme-neon-cyber',
+                colors: {
+                    primary: '#00ffff',
+                    secondary: '#ff00ff',
+                    accent: '#0080ff'
+                },
+                preview: 'linear-gradient(135deg, #00ffff, #ff00ff, #0080ff)'
+            },
+            'synthwave': {
+                name: 'Synthwave Retro',
+                description: 'Nostalgic 80s synthwave with hot pink and purple gradients',
+                cost: 35,
+                cssClass: 'theme-synthwave',
+                colors: {
+                    primary: '#ff0080',
+                    secondary: '#8000ff',
+                    accent: '#ff4000'
+                },
+                preview: 'linear-gradient(135deg, #ff0080, #8000ff, #ff4000)'
+            },
+            'matrix': {
+                name: 'Matrix Code',
+                description: 'Enter the Matrix with flowing green code aesthetics',
+                cost: 50,
+                cssClass: 'theme-matrix',
+                colors: {
+                    primary: '#00ff41',
+                    secondary: '#008f11',
+                    accent: '#40ff71'
+                },
+                preview: 'linear-gradient(135deg, #00ff41, #008f11, #40ff71)'
+            }
+        };
+
+        // Part class for belt animations
+        class Part {
+            constructor(type, x, y, quality = null) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.quality = quality;
+                this.speed = 2;
+                this.checked = false;
+                this.variant = Math.floor(Math.random() * 3); // 3 color variants
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            draw(ctx) {
+                const colorVariants = {
+                    head: ['#00ffff', '#ff00ff', '#ffff00'],
+                    chest: ['#8a2be2', '#ff1493', '#00ff7f'],
+                    arm: ['#00ff41', '#ff6600', '#ff0080'],
+                    leg: ['#ffa500', '#00bfff', '#ff4500']
+                };
+
+                const primaryColor = colorVariants[this.type][this.variant];
+                const secondaryColor = this.lightenColor(primaryColor, 40);
+                const shadowColor = this.darkenColor(primaryColor, 30);
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Draw part based on type
+                switch(this.type) {
+                    case 'head':
+                        this.drawRobotHead(ctx, primaryColor, secondaryColor, shadowColor);
+                        break;
+                    case 'chest':
+                        this.drawRobotChest(ctx, primaryColor, secondaryColor, shadowColor);
+                        break;
+                    case 'arm':
+                        this.drawRobotArm(ctx, primaryColor, secondaryColor, shadowColor);
+                        break;
+                    case 'leg':
+                        this.drawRobotLeg(ctx, primaryColor, secondaryColor, shadowColor);
+                        break;
+                }
+
+                // Draw quality indicator if checked
+                if (this.checked) {
+                    ctx.fillStyle = this.quality ? '#00ff41' : '#ff0000';
+                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(15, -15, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.restore();
+            }
+
+            drawRobotHead(ctx, primary, secondary, shadow) {
+                // Main head structure
+                ctx.fillStyle = shadow;
+                ctx.fillRect(-12, -8, 24, 16);
+                
+                ctx.fillStyle = primary;
+                ctx.fillRect(-10, -6, 20, 12);
+                
+                // Face visor
+                ctx.fillStyle = secondary;
+                ctx.fillRect(-8, -4, 16, 6);
+                
+                // Eyes
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-6, -2, 3, 2);
+                ctx.fillRect(3, -2, 3, 2);
+                
+                // Antenna
+                ctx.strokeStyle = primary;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, -8);
+                ctx.lineTo(0, -12);
+                ctx.stroke();
+                
+                // Glow effect
+                ctx.shadowColor = primary;
+                ctx.shadowBlur = 4;
+                ctx.strokeRect(-10, -6, 20, 12);
+                ctx.shadowBlur = 0;
+            }
+
+            drawRobotChest(ctx, primary, secondary, shadow) {
+                // Main chest body
+                ctx.fillStyle = shadow;
+                ctx.fillRect(-10, -12, 20, 24);
+                
+                ctx.fillStyle = primary;
+                ctx.fillRect(-8, -10, 16, 20);
+                
+                // Central core
+                ctx.fillStyle = secondary;
+                ctx.beginPath();
+                ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Power lines
+                ctx.strokeStyle = secondary;
+                ctx.lineWidth = 2;
+                for(let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(-6, -6 + i * 4);
+                    ctx.lineTo(6, -6 + i * 4);
+                    ctx.stroke();
+                }
+                
+                // Shoulder connectors
+                ctx.fillStyle = shadow;
+                ctx.fillRect(-12, -8, 4, 6);
+                ctx.fillRect(8, -8, 4, 6);
+                
+                // Glow effect
+                ctx.shadowColor = primary;
+                ctx.shadowBlur = 6;
+                ctx.strokeRect(-8, -10, 16, 20);
+                ctx.shadowBlur = 0;
+            }
+
+            drawRobotArm(ctx, primary, secondary, shadow) {
+                // Upper arm
+                ctx.fillStyle = shadow;
+                ctx.fillRect(-3, -12, 6, 16);
+                
+                ctx.fillStyle = primary;
+                ctx.fillRect(-2, -10, 4, 12);
+                
+                // Joint
+                ctx.fillStyle = secondary;
+                ctx.beginPath();
+                ctx.arc(0, -2, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Lower arm
+                ctx.fillStyle = primary;
+                ctx.fillRect(-2, 2, 4, 10);
+                
+                // Hand/gripper
+                ctx.fillStyle = secondary;
+                ctx.fillRect(-3, 10, 2, 4);
+                ctx.fillRect(1, 10, 2, 4);
+                
+                // Hydraulics
+                ctx.strokeStyle = secondary;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(-1, -8);
+                ctx.lineTo(-1, 8);
+                ctx.moveTo(1, -8);
+                ctx.lineTo(1, 8);
+                ctx.stroke();
+                
+                // Glow effect
+                ctx.shadowColor = primary;
+                ctx.shadowBlur = 4;
+                ctx.strokeRect(-2, -10, 4, 22);
+                ctx.shadowBlur = 0;
+            }
+
+            drawRobotLeg(ctx, primary, secondary, shadow) {
+                // Thigh
+                ctx.fillStyle = shadow;
+                ctx.fillRect(-3, -12, 6, 12);
+                
+                ctx.fillStyle = primary;
+                ctx.fillRect(-2, -10, 4, 10);
+                
+                // Knee joint
+                ctx.fillStyle = secondary;
+                ctx.beginPath();
+                ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Shin
+                ctx.fillStyle = primary;
+                ctx.fillRect(-2, 2, 4, 10);
+                
+                // Foot
+                ctx.fillStyle = secondary;
+                ctx.fillRect(-4, 10, 8, 3);
+                
+                // Hydraulics
+                ctx.strokeStyle = secondary;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(-1, -8);
+                ctx.lineTo(-1, 8);
+                ctx.moveTo(1, -8);
+                ctx.lineTo(1, 8);
+                ctx.stroke();
+                
+                // Glow effect
+                ctx.shadowColor = primary;
+                ctx.shadowBlur = 4;
+                ctx.strokeRect(-2, -10, 4, 22);
+                ctx.shadowBlur = 0;
+            }
+
+            lightenColor(color, percent) {
+                const hex = color.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                
+                return `rgb(${Math.min(255, r + percent)}, ${Math.min(255, g + percent)}, ${Math.min(255, b + percent)})`;
+            }
+
+            darkenColor(color, percent) {
+                const hex = color.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                
+                return `rgb(${Math.max(0, r - percent)}, ${Math.max(0, g - percent)}, ${Math.max(0, b - percent)})`;
+            }
+        }
+
+        // Factory Worker class for background animation
+        class FactoryWorker {
+            constructor(x, y, gapIndex) {
+                this.baseX = x; // Original position in the gap
+                this.baseY = y;
+                this.x = x;
+                this.y = y;
+                this.gapIndex = gapIndex; // Which gap this worker belongs to
+                this.speed = 0.2 + Math.random() * 0.3; // Slower, more confined movement
+                this.direction = Math.random() * Math.PI * 2;
+                this.animationFrame = 0;
+                this.type = Math.floor(Math.random() * 3); // 3 worker types
+                this.colorScheme = this.getRandomColorScheme();
+                this.lastDirectionChange = Date.now();
+                this.task = Math.floor(Math.random() * 3); // Different tasks/animations
+                this.visible = true;
+                this.lastVisibilityToggle = Date.now();
+                this.showAlways = true; // Always show workers
+            }
+
+            getRandomColorScheme() {
+                const schemes = [
+                    { primary: '#ffffff', secondary: '#cccccc', accent: '#000000' },
+                    { primary: '#dddddd', secondary: '#aaaaaa', accent: '#333333' },
+                    { primary: '#cccccc', secondary: '#999999', accent: '#111111' },
+                    { primary: '#bbbbbb', secondary: '#888888', accent: '#222222' },
+                    { primary: '#eeeeee', secondary: '#bbbbbb', accent: '#444444' },
+                    { primary: '#f0f0f0', secondary: '#d0d0d0', accent: '#000000' },
+                    { primary: '#e0e0e0', secondary: '#b0b0b0', accent: '#333333' },
+                    { primary: '#d5d5d5', secondary: '#a5a5a5', accent: '#1a1a1a' }
+                ];
+                return schemes[Math.floor(Math.random() * schemes.length)];
+            }
+
+            update(canvasWidth, canvasHeight) {
+                // Update animation frame
+                this.animationFrame += 0.1;
+
+                // Workers are now always visible - no toggle needed
+                // Toggle visibility every second (1000ms) - DISABLED
+                // if (!this.showAlways && Date.now() - this.lastVisibilityToggle > 1000) {
+                //     this.visible = !this.visible;
+                //     this.lastVisibilityToggle = Date.now();
+                // }
+
+                // Change direction occasionally for random movement
+                if (Date.now() - this.lastDirectionChange > 2000 + Math.random() * 3000) {
+                    this.direction = Math.random() * Math.PI * 2;
+                    this.lastDirectionChange = Date.now();
+                }
+
+                // Move in current direction but stay within 10px of base position
+                const moveX = Math.cos(this.direction) * this.speed;
+                const moveY = Math.sin(this.direction) * this.speed;
+                
+                const newX = this.x + moveX;
+                const newY = this.y + moveY;
+                
+                // Check if new position is within 10px radius of base position
+                const distanceFromBase = Math.sqrt(
+                    Math.pow(newX - this.baseX, 2) + Math.pow(newY - this.baseY, 2)
+                );
+                
+                if (distanceFromBase <= 10) {
+                    this.x = newX;
+                    this.y = newY;
+                } else {
+                    // If we hit the boundary, choose a new direction towards the center
+                    this.direction = Math.atan2(this.baseY - this.y, this.baseX - this.x) + (Math.random() - 0.5) * Math.PI / 2;
+                }
+
+                // Ensure we stay within canvas bounds
+                this.x = Math.max(20, Math.min(canvasWidth - 20, this.x));
+                this.y = Math.max(20, Math.min(canvasHeight - 20, this.y));
+            }
+
+            draw(ctx) {
+                // Only draw if visible (or always show for debugging)
+                if (!this.visible && !this.showAlways) return;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Add stronger glow for visibility against dark background
+                ctx.shadowColor = this.colorScheme.primary;
+                ctx.shadowBlur = 6;
+
+                const scale = 1.5 + Math.sin(this.animationFrame) * 0.2; // Larger and more visible
+                ctx.scale(scale, scale);
+
+                switch(this.type) {
+                    case 0:
+                        this.drawTechWorker(ctx);
+                        break;
+                    case 1:
+                        this.drawMaintWorker(ctx);
+                        break;
+                    case 2:
+                        this.drawSupervisorWorker(ctx);
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            drawTechWorker(ctx) {
+                // Add black outline for visibility
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                
+                // Head
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-4, -8, 8, 6);
+                ctx.strokeRect(-4, -8, 8, 6);
+                
+                // Helmet/visor
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-3, -7, 6, 3);
+                ctx.strokeRect(-3, -7, 6, 3);
+                
+                // Body
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-3, -2, 6, 8);
+                ctx.strokeRect(-3, -2, 6, 8);
+                
+                // Arms (animated)
+                const armOffset = Math.sin(this.animationFrame * 2) * 2;
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-6, 0 + armOffset, 2, 4);
+                ctx.strokeRect(-6, 0 + armOffset, 2, 4);
+                ctx.fillRect(4, 0 - armOffset, 2, 4);
+                ctx.strokeRect(4, 0 - armOffset, 2, 4);
+                
+                // Legs (walking animation)
+                const legOffset = Math.sin(this.animationFrame * 3) * 1;
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-2, 6 + legOffset, 1, 4);
+                ctx.strokeRect(-2, 6 + legOffset, 1, 4);
+                ctx.fillRect(1, 6 - legOffset, 1, 4);
+                ctx.strokeRect(1, 6 - legOffset, 1, 4);
+                
+                // Tool/device
+                ctx.fillStyle = this.colorScheme.accent;
+                ctx.fillRect(-1, 2, 2, 1);
+                
+                // Status lights
+                const blinkState = Math.sin(this.animationFrame * 4) > 0;
+                if (blinkState) {
+                    ctx.fillStyle = this.colorScheme.accent;
+                    ctx.fillRect(-1, -6, 1, 1);
+                    ctx.fillRect(1, -6, 1, 1);
+                }
+            }
+
+            drawMaintWorker(ctx) {
+                // Add black outline for visibility
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                
+                // Head
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-3, -7, 6, 5);
+                ctx.strokeRect(-3, -7, 6, 5);
+                
+                // Hard hat
+                ctx.fillStyle = this.colorScheme.accent;
+                ctx.fillRect(-4, -8, 8, 2);
+                ctx.strokeRect(-4, -8, 8, 2);
+                
+                // Body
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-4, -2, 8, 10);
+                
+                // Tool belt
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-4, 4, 8, 2);
+                
+                // Arms with tools
+                const armSwing = Math.sin(this.animationFrame * 1.5) * 3;
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-6, 1 + armSwing, 2, 5);
+                ctx.fillRect(4, 1 - armSwing, 2, 5);
+                
+                // Wrench/tool
+                ctx.fillStyle = this.colorScheme.accent;
+                ctx.fillRect(5, 5 - armSwing, 3, 1);
+                
+                // Legs
+                const walkCycle = Math.sin(this.animationFrame * 2.5) * 1.5;
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-2, 8 + walkCycle, 1, 5);
+                ctx.fillRect(1, 8 - walkCycle, 1, 5);
+            }
+
+            drawSupervisorWorker(ctx) {
+                // Add black outline for visibility
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                
+                // Head
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-3, -7, 6, 5);
+                ctx.strokeRect(-3, -7, 6, 5);
+                
+                // Cap/badge
+                ctx.fillStyle = this.colorScheme.accent;
+                ctx.fillRect(-2, -8, 4, 1);
+                ctx.strokeRect(-2, -8, 4, 1);
+                ctx.fillRect(-1, -6, 2, 1);
+                ctx.strokeRect(-1, -6, 2, 1);
+                
+                // Body (larger, more authoritative)
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-4, -2, 8, 12);
+                
+                // Shoulder pads/rank
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-5, -1, 2, 3);
+                ctx.fillRect(3, -1, 2, 3);
+                
+                // Arms (gesturing)
+                const gestureAngle = Math.sin(this.animationFrame) * 0.5;
+                ctx.fillStyle = this.colorScheme.primary;
+                ctx.fillRect(-6, 2 + gestureAngle * 2, 2, 4);
+                ctx.fillRect(4, 2 - gestureAngle * 2, 2, 4);
+                
+                // Clipboard/tablet
+                ctx.fillStyle = this.colorScheme.accent;
+                ctx.fillRect(-7, 3 + gestureAngle * 2, 2, 3);
+                
+                // Legs
+                ctx.fillStyle = this.colorScheme.secondary;
+                ctx.fillRect(-2, 10, 1, 5);
+                ctx.fillRect(1, 10, 1, 5);
+                
+                // Authority indicators (blinking)
+                if (Math.sin(this.animationFrame * 3) > 0.5) {
+                    ctx.fillStyle = this.colorScheme.accent;
+                    ctx.fillRect(-1, 1, 2, 1);
+                }
+            }
+        }
+
+        // Initialize game
+        function initGame() {
+            console.log('Initializing game...');
+            setupCanvases();
+            setupEventListeners();
+            loadGameState();
+            initializeResearchFromSave();
+            initializeThemeFromSave();
+            updateUI();
+            
+            updateInsuranceUI();
+            
+            setTimeout(() => {
+                spawnInitialParts();
+            }, 1000);
+            
+            startGameLoop();
+            initializeResearchTree();
+            console.log('Game initialized successfully');
+        }
+
+        function initializeThemeFromSave() {
+            // Ensure theme arrays exist
+            if (!gameState.themes) {
+                gameState.themes = {
+                    purchased: ['default'],
+                    current: 'default'
+                };
+            }
+            if (!gameState.themes.purchased) {
+                gameState.themes.purchased = ['default'];
+            }
+            if (!gameState.themes.current) {
+                gameState.themes.current = 'default';
+            }
+            
+            // Apply the current theme
+            applyTheme(gameState.themes.current);
+        }
+
+        function initializeResearchFromSave() {
+            // Ensure research arrays exist
+            if (!gameState.research.purchased) {
+                gameState.research.purchased = [];
+            }
+            if (!gameState.research.enabled) {
+                gameState.research.enabled = [];
+            }
+            
+            // Restore research state from save data
+            gameState.research.purchased.forEach(id => {
+                if (researchTree[id]) {
+                    researchTree[id].purchased = true;
+                    storeBaseValues(id);
+                }
+            });
+            
+            gameState.research.enabled.forEach(id => {
+                if (researchTree[id] && researchTree[id].purchased) {
+                    researchTree[id].enabled = true;
+                    applyResearchEffect(id);
+                }
+            });
+        }
+
+        function spawnInitialParts() {
+            console.log('Spawning initial test parts...');
+            Object.keys(gameState.belts).forEach(type => {
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                if (canvas && canvas.width > 0) {
+                    const partWidth = 40;
+                    const minX = partWidth / 2;
+                    const maxX = canvas.width - partWidth / 2;
+                    
+                    for (let i = 0; i < 3; i++) {
+                        const x = minX + (i * (maxX - minX) / 2);
+                        const y = 50 + i * 50;
+                        const part = new Part(type, x, y);
+                        gameState.belts[type].parts.push(part);
+                    }
+                    console.log(`Added 3 initial parts to ${type} belt (width bounds: ${minX}-${maxX}), total parts: ${gameState.belts[type].parts.length}`);
+                } else {
+                    console.log(`Canvas not ready for ${type}: width=${canvas ? canvas.width : 'no canvas'}`);
+                }
+            });
+            
+            console.log('Current belt parts state:', Object.keys(gameState.belts).map(type => ({
+                type,
+                partsCount: gameState.belts[type].parts.length
+            })));
+        }
+
+        function setupCanvases() {
+            console.log('Setting up canvases...');
+            const beltTypes = ['head', 'chest', 'arm', 'leg'];
+            beltTypes.forEach(type => {
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                console.log(`Canvas for ${type}:`, canvas);
+                if (canvas) {
+                    const container = canvas.parentElement.querySelector('.conveyor-belt');
+                    canvas.width = container.offsetWidth;
+                    canvas.height = container.offsetHeight;
+                    canvases[type] = canvas.getContext('2d');
+                    console.log(`Setup canvas ${type}: ${canvas.width}x${canvas.height}`);
+                }
+            });
+
+            // Setup background canvas for ambient effects
+            const backgroundCanvas = document.getElementById('background-canvas');
+            console.log('Background canvas:', backgroundCanvas);
+            if (backgroundCanvas) {
+                const factoryFloor = document.getElementById('factory-floor');
+                backgroundCanvas.width = factoryFloor.offsetWidth;
+                backgroundCanvas.height = factoryFloor.offsetHeight;
+                backgroundCtx = backgroundCanvas.getContext('2d');
+                console.log(`Background canvas setup: ${backgroundCanvas.width}x${backgroundCanvas.height}`);
+            } else {
+                console.error('Background canvas not found!');
+            }
+            
+            // Initialize HTML-based workers after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                initializeBackgroundWorkers();
+            }, 500);
+
+            // Setup production chart
+            const chartCanvas = document.getElementById('production-chart');
+            if (chartCanvas) {
+                chartCanvas.width = chartCanvas.offsetWidth;
+                chartCanvas.height = chartCanvas.offsetHeight;
+                productionChart = chartCanvas.getContext('2d');
+            }
+        }
+
+        function initializeBackgroundWorkers() {
+            // Initialize HTML-based workers in each workers column
+            const workerColumns = document.querySelectorAll('.workers-column');
+            console.log(`Found ${workerColumns.length} worker columns`);
+            
+            workerColumns.forEach((column, columnIndex) => {
+                // Clear existing workers
+                column.innerHTML = '';
+                
+                // Calculate how many workers to place in this column
+                const columnHeight = column.offsetHeight || 400; // Fallback height
+                const workerHeight = 60; // Worker height + margin
+                const workersPerColumn = Math.max(3, Math.floor(columnHeight / workerHeight));
+                
+                console.log(`Column ${columnIndex}: Height ${columnHeight}px, placing ${workersPerColumn} workers`);
+                
+                for (let i = 0; i < workersPerColumn; i++) {
+                    const worker = document.createElement('div');
+                    const workerTypes = ['tech', 'maintenance', 'supervisor'];
+                    const workerType = workerTypes[Math.floor(Math.random() * workerTypes.length)];
+                    
+                    worker.className = `worker worker-${workerType}`;
+                    worker.setAttribute('data-type', workerType);
+                    worker.setAttribute('data-column', columnIndex);
+                    
+                    // Add random working animation
+                    if (Math.random() < 0.3) {
+                        worker.classList.add('working');
+                    }
+                    
+                    column.appendChild(worker);
+                }
+            });
+            
+            console.log('HTML-based workers initialized');
+            
+            // Start worker animation cycle
+            setInterval(updateWorkerAnimations, 2000);
+        }
+
+        function setupEventListeners() {
+            // Belt click events for manual part spawning
+            Object.keys(canvases).forEach(type => {
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                if (canvas) {
+                    canvas.addEventListener('click', (e) => spawnPart(type, e));
+                }
+            });
+
+            // Quality control checkpoints
+            document.querySelectorAll('.qc-checkpoint').forEach(checkpoint => {
+                checkpoint.addEventListener('click', (e) => {
+                    const beltType = e.target.dataset.beltType;
+                    performQualityCheck(beltType);
+                });
+            });
+
+            // Sell robots button
+            const sellButton = document.getElementById('sell-robots-btn');
+            if (sellButton) {
+                sellButton.addEventListener('click', sellRobots);
+            }
+
+            // Research tab switching
+            document.getElementById('adv-tab-research')?.addEventListener('click', () => showAdvancementTab('research'));
+            document.getElementById('adv-tab-prestige')?.addEventListener('click', () => showAdvancementTab('prestige'));
+
+            // Prestige button
+            document.getElementById('prestige-btn')?.addEventListener('click', performPrestige);
+
+            // Catastrophe indicator
+            document.getElementById('catastrophe-indicator')?.addEventListener('click', showCatastropheModal);
+            
+            // Window resize handler
+            window.addEventListener('resize', handleWindowResize);
+        }
+
+        function handleWindowResize() {
+            console.log('Window resized - updating canvases and repositioning parts');
+            
+            // Debounce resize events
+            clearTimeout(window.resizeTimeout);
+            window.resizeTimeout = setTimeout(() => {
+                // Update canvas sizes
+                updateCanvasSizes();
+                
+                // Reposition parts that are now out of bounds
+                repositionPartsAfterResize();
+                
+                // Update background workers positions
+                updateBackgroundWorkersAfterResize();
+            }, 250); // Wait 250ms after resize stops
+        }
+
+        function updateCanvasSizes() {
+            const beltTypes = ['head', 'chest', 'arm', 'leg'];
+            beltTypes.forEach(type => {
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                if (canvas) {
+                    const container = canvas.parentElement.querySelector('.conveyor-belt');
+                    const oldWidth = canvas.width;
+                    const oldHeight = canvas.height;
+                    
+                    canvas.width = container.offsetWidth;
+                    canvas.height = container.offsetHeight;
+                    
+                    console.log(`Canvas ${type} resized from ${oldWidth}x${oldHeight} to ${canvas.width}x${canvas.height}`);
+                }
+            });
+
+            // Update background canvas
+            const backgroundCanvas = document.getElementById('background-canvas');
+            if (backgroundCanvas) {
+                const factoryFloor = document.getElementById('factory-floor');
+                backgroundCanvas.width = factoryFloor.offsetWidth;
+                backgroundCanvas.height = factoryFloor.offsetHeight;
+            }
+
+            // Update production chart canvas
+            const chartCanvas = document.getElementById('production-chart');
+            if (chartCanvas) {
+                chartCanvas.width = chartCanvas.offsetWidth;
+                chartCanvas.height = chartCanvas.offsetHeight;
+            }
+        }
+
+        function repositionPartsAfterResize() {
+            Object.keys(gameState.belts).forEach(type => {
+                const belt = gameState.belts[type];
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                
+                if (!canvas || !belt.parts) return;
+                
+                const partWidth = 40;
+                const minX = partWidth / 2;
+                const maxX = canvas.width - partWidth / 2;
+                
+                // Filter out parts that are now out of bounds and reposition others
+                belt.parts = belt.parts.filter(part => {
+                    if (!part || typeof part.update !== 'function') {
+                        return false;
+                    }
+                    
+                    // If part is outside new canvas bounds, remove it
+                    if (part.x < minX || part.x > maxX || part.y > canvas.height + 50) {
+                        console.log(`Removing out-of-bounds ${type} part at ${part.x}, ${part.y}`);
+                        return false;
+                    }
+                    
+                    // Ensure part is within horizontal bounds
+                    if (part.x < minX) {
+                        part.x = minX;
+                        console.log(`Repositioned ${type} part to minX: ${minX}`);
+                    } else if (part.x > maxX) {
+                        part.x = maxX;
+                        console.log(`Repositioned ${type} part to maxX: ${maxX}`);
+                    }
+                    
+                    return true;
+                });
+                
+                console.log(`${type} belt now has ${belt.parts.length} parts after resize`);
+            });
+        }
+
+        function updateBackgroundWorkersAfterResize() {
+            // Reinitialize HTML-based workers after resize
+            setTimeout(() => {
+                initializeBackgroundWorkers();
+            }, 100);
+        }
+
+        function spawnPart(type, event) {
+            const canvas = document.getElementById(`belt-canvas-${type}`);
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = 50; // Start near top
+
+            const part = new Part(type, x, y);
+            gameState.belts[type].parts.push(part);
+            
+            // Manual interaction gives small money bonus
+            gameState.money += 1;
+        }
+
+        function performQualityCheck(beltType) {
+            const belt = gameState.belts[beltType];
+            const checkpoint = document.querySelector(`[data-belt-type="${beltType}"]`);
+            
+            if (!belt || !belt.parts || belt.parts.length === 0) {
+                console.log(`No parts to check on ${beltType} belt`);
+                return;
+            }
+
+            // Check ALL unchecked parts on this belt
+            const partsToCheck = belt.parts.filter(part => !part.checked);
+            
+            if (partsToCheck.length === 0) {
+                console.log(`All parts on ${beltType} belt already checked`);
+                return;
+            }
+
+            console.log(`Checking ${partsToCheck.length} parts on ${beltType} belt`);
+
+            let successCount = 0;
+            let failCount = 0;
+
+            partsToCheck.forEach(part => {
+                const success = Math.random() < gameState.production.qualityChance;
+                part.quality = success;
+                part.checked = true;
+
+                // Visual feedback with slight delay for each part
+                setTimeout(() => {
+                    createParticleEffect(part.x, part.y, success);
+                }, Math.random() * 500);
+                
+                if (success) {
+                    // Check inventory limits
+                    if (gameState.partsInventory[beltType].current < gameState.partsInventory[beltType].max) {
+                        gameState.partsInventory[beltType].current++;
+                        successCount++;
+                    }
+                } else {
+                    failCount++;
+                }
+            });
+
+            // Show visual feedback on checkpoint based on overall results
+            if (successCount > failCount) {
+                // More accepted than rejected - green button
+                checkpoint.classList.add('qc-success');
+                setTimeout(() => checkpoint.classList.remove('qc-success'), 1000);
+            } else {
+                // More rejected than accepted (or equal) - red button
+                checkpoint.classList.add('qc-failure');
+                setTimeout(() => checkpoint.classList.remove('qc-failure'), 1000);
+            }
+
+            // Show floating text with results
+            showQCResults(beltType, successCount, failCount);
+
+            // Check for robot assembly
+            checkRobotAssembly();
+        }
+
+        function showQCResults(beltType, successCount, failCount) {
+            const checkpoint = document.querySelector(`[data-belt-type="${beltType}"]`);
+            
+            // Update QC button text with colored numbers
+            checkpoint.innerHTML = `
+                <div class="qc-result-text">
+                    <span class="qc-accepted">✓${successCount}</span> 
+                    <span class="qc-rejected">✗${failCount}</span>
+                </div>
+            `;
+            
+            // Reset button text back to "QC" after 2 seconds
+            setTimeout(() => {
+                checkpoint.innerHTML = 'QC';
+            }, 2000);
+            
+            // Show floating result text above the button
+            const resultText = document.createElement('div');
+            resultText.className = 'qc-result-float';
+            resultText.innerHTML = `<span class="qc-accepted">✓${successCount}</span> <span class="qc-rejected">✗${failCount}</span>`;
+            resultText.style.cssText = `
+                position: absolute;
+                bottom: 70px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-weight: bold;
+                font-size: 14px;
+                z-index: 30;
+                pointer-events: none;
+                animation: float-result 2s ease-out forwards;
+                background: rgba(0, 0, 0, 0.8);
+                padding: 4px 8px;
+                border-radius: 4px;
+                border: 1px solid var(--primary-color);
+            `;
+            
+            checkpoint.parentElement.appendChild(resultText);
+            
+            setTimeout(() => {
+                if (resultText.parentElement) {
+                    resultText.parentElement.removeChild(resultText);
+                }
+            }, 2000);
+        }
+
+        function checkRobotAssembly() {
+            const inventory = gameState.partsInventory;
+            
+            // Check if we can assemble robots
+            const maxRobots = Math.min(
+                inventory.head.current,
+                inventory.chest.current,
+                Math.floor(inventory.arm.current / 2),
+                Math.floor(inventory.leg.current / 2)
+            );
+            
+            if (maxRobots > 0) {
+                // Determine how many robots to assemble based on rapid assembly research
+                const rapidEnabled = researchTree['rapid-assembly'] && researchTree['rapid-assembly'].enabled;
+                const assemblyRate = rapidEnabled ? 3 : 1;
+                const robotsToAssemble = Math.min(maxRobots, assemblyRate);
+                
+                // Consume parts
+                inventory.head.current -= robotsToAssemble;
+                inventory.chest.current -= robotsToAssemble;
+                inventory.arm.current -= robotsToAssemble * 2;
+                inventory.leg.current -= robotsToAssemble * 2;
+
+                gameState.robotsAssembled += robotsToAssemble;
+                gameState.statistics.totalRobots += robotsToAssemble;
+
+                console.log(`Assembled ${robotsToAssemble} robots (rapid assembly ${rapidEnabled ? 'enabled' : 'disabled'})`);
+
+                // Animate completed robots
+                for (let i = 0; i < robotsToAssemble; i++) {
+                    setTimeout(() => animateCompletedRobot(), i * 200);
+                }
+            }
+        }
+
+        function animateCompletedRobot() {
+            const assemblyArea = document.getElementById('assembly-area');
+            const robot = document.createElement('div');
+            robot.className = 'completed-robot';
+            robot.innerHTML = `
+                <div class="head"></div>
+                <div class="body"></div>
+                <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                </div>
+            `;
+            assemblyArea.appendChild(robot);
+
+            // Remove after animation
+            setTimeout(() => {
+                if (robot.parentElement) {
+                    robot.parentElement.removeChild(robot);
+                }
+            }, 8000);
+        }
+
+        function sellRobots() {
+            if (gameState.robotsAssembled > 0) {
+                const basePrice = 50;
+                const totalIncome = gameState.robotsAssembled * basePrice * gameState.qualityMultiplier;
+                
+                gameState.money += totalIncome;
+                gameState.statistics.totalIncome += totalIncome;
+                gameState.robotsAssembled = 0;
+
+                showFloatingIncome(totalIncome);
+                syncWorkerData();
+                
+                // No additional research points needed (using money system now)
+            }
+        }
+
+        function showFloatingIncome(amount) {
+            const salesPanel = document.getElementById('sales-panel');
+            const floatingText = document.createElement('div');
+            floatingText.className = 'income-float';
+            floatingText.textContent = `+$${amount}`;
+            floatingText.style.left = '50%';
+            floatingText.style.top = '50%';
+            
+            salesPanel.appendChild(floatingText);
+            setTimeout(() => {
+                if (floatingText.parentElement) {
+                    floatingText.parentElement.removeChild(floatingText);
+                }
+            }, 1500);
+        }
+
+        function createParticleEffect(x, y, success) {
+            const particle = document.createElement('div');
+            particle.className = `particle ${success ? 'success' : 'failure'}`;
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.width = '4px';
+            particle.style.height = '4px';
+            
+            // Random direction
+            const dx = (Math.random() - 0.5) * 100;
+            const dy = (Math.random() - 0.5) * 100;
+            particle.style.setProperty('--dx', dx + 'px');
+            particle.style.setProperty('--dy', dy + 'px');
+
+            document.body.appendChild(particle);
+            setTimeout(() => {
+                if (particle.parentElement) {
+                    particle.parentElement.removeChild(particle);
+                }
+            }, 800);
+        }
+
+        function updateGame() {
+            const now = Date.now();
+            const deltaTime = (now - gameState.lastUpdate) / 1000; // Convert to seconds
+            gameState.lastUpdate = now;
+
+            // Update catastrophe
+            updateCatastrophe(deltaTime);
+
+            // Auto-spawn parts
+            autoSpawnParts(deltaTime);
+
+            // Update part positions
+            updatePartPositions();
+
+            // Auto quality checks if researched
+            performAutoQualityChecks();
+
+            // Update production stats
+            updateProductionStats();
+
+            // Render everything
+            render();
+            updateUI();
+        }
+
+        function autoSpawnParts(deltaTime) {
+            if (productionWorker && false) {
+                productionWorker.postMessage({ type: 'update' });
+            } else {
+                Object.keys(gameState.belts).forEach(type => {
+                    const belt = gameState.belts[type];
+                    belt.spawnTimer += deltaTime;
+                    
+                    const spawnRate = gameState.production.ratesPerSecond[type];
+                    if (spawnRate > 0 && belt.spawnTimer >= (1 / spawnRate)) {
+                        const canvas = document.getElementById(`belt-canvas-${type}`);
+                        if (canvas && canvas.width > 0) {
+                            const partWidth = 40;
+                            const minX = partWidth / 2;
+                            const maxX = canvas.width - partWidth / 2;
+                            const x = Math.random() * (maxX - minX) + minX;
+                            
+                            const part = new Part(type, x, 30);
+                            belt.parts.push(part);
+                            belt.spawnTimer = 0;
+                            console.log(`Spawned ${type} part at ${x}, total parts: ${belt.parts.length}`);
+                        }
+                    }
+                });
+                
+                updateInsurancePremiums(deltaTime);
+            }
+        }
+
+        function updateInsurancePremiums(deltaTime) {
+            const now = Date.now();
+            const timeSinceLastPremium = now - gameState.insurance.lastPremiumTime;
+            const monthInMs = 30 * 1000;
+            
+            if (timeSinceLastPremium >= monthInMs) {
+                let totalPremiums = 0;
+                gameState.insurance.policies.forEach(policyId => {
+                    const policy = insurancePolicies[policyId];
+                    if (policy) {
+                        totalPremiums += policy.monthlyPremium;
+                    }
+                });
+                
+                if (totalPremiums > 0) {
+                    gameState.insurance.premiumsDue += totalPremiums;
+                    gameState.insurance.lastPremiumTime = now;
+                    showInsuranceNotification(`Insurance premiums due: $${totalPremiums}`);
+                }
+            }
+        }
+
+        function updatePartPositions() {
+            Object.keys(gameState.belts).forEach(type => {
+                const belt = gameState.belts[type];
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                
+                if (!canvas || !belt.parts) return;
+                
+                const partWidth = 40;
+                const minX = partWidth / 2;
+                const maxX = canvas.width - partWidth / 2;
+                
+                belt.parts = belt.parts.filter(part => {
+                    // Check if part is a valid object with update method
+                    if (!part || typeof part.update !== 'function') {
+                        console.error('Invalid part object found:', part);
+                        return false; // Remove invalid parts
+                    }
+                    
+                    try {
+                        part.update();
+                        
+                        // Ensure part stays within horizontal bounds
+                        if (part.x < minX) {
+                            part.x = minX;
+                        } else if (part.x > maxX) {
+                            part.x = maxX;
+                        }
+                        
+                        return part.y < canvas.height + 50; // Remove parts that go off-screen vertically
+                    } catch (error) {
+                        console.error('Error updating part:', error, part);
+                        return false; // Remove problematic parts
+                    }
+                });
+            });
+        }
+
+        function performAutoQualityChecks() {
+            // Only run if auto inspection is enabled
+            const autoEnabled = researchTree['auto-inspection'] && researchTree['auto-inspection'].enabled;
+            if (!autoEnabled) return;
+            
+            Object.keys(gameState.belts).forEach(beltType => {
+                const belt = gameState.belts[beltType];
+                const canvas = document.getElementById(`belt-canvas-${beltType}`);
+                if (!canvas) return;
+                
+                const checkpointY = canvas.height - 80;
+                
+                // Auto QC only checks parts near the checkpoint (original behavior for auto mode)
+                belt.parts.forEach(part => {
+                    if (Math.abs(part.y - checkpointY) < 20 && !part.checked) {
+                        const success = Math.random() < gameState.production.qualityChance;
+                        part.quality = success;
+                        part.checked = true;
+                        
+                        if (success && gameState.partsInventory[beltType].current < gameState.partsInventory[beltType].max) {
+                            gameState.partsInventory[beltType].current++;
+                        }
+                        
+                        console.log(`Auto QC: ${beltType} part ${success ? 'passed' : 'failed'}`);
+                    }
+                });
+            });
+            
+            checkRobotAssembly();
+        }
+
+        function updateCatastrophe(deltaTime) {
+            if (gameState.catastrophe) {
+                gameState.catastrophe.timeLeft -= deltaTime * 1000;
+                if (gameState.catastrophe.timeLeft <= 0) {
+                    endCatastrophe();
+                }
+            } else if (Math.random() < 0.001) { // Small chance each frame
+                triggerRandomCatastrophe();
+            }
+        }
+
+        function triggerRandomCatastrophe() {
+            const catastrophe = catastropheTypes[Math.floor(Math.random() * catastropheTypes.length)];
+            
+            if (isProtectedByCatastrophe(catastrophe.name)) {
+                showInsuranceNotification(`${catastrophe.name} prevented by insurance!`);
+                return;
+            }
+            
+            gameState.catastrophe = {
+                ...catastrophe,
+                timeLeft: catastrophe.duration,
+                originalRates: { ...gameState.production.ratesPerSecond },
+                originalQuality: gameState.production.qualityChance
+            };
+            
+            catastrophe.effect();
+            showCatastropheIndicator();
+        }
+
+        function endCatastrophe() {
+            if (gameState.catastrophe) {
+                // Restore original rates
+                gameState.production.ratesPerSecond = gameState.catastrophe.originalRates;
+                gameState.production.qualityChance = gameState.catastrophe.originalQuality;
+                gameState.catastrophe = null;
+                hideCatastropheIndicator();
+            }
+        }
+
+        function showCatastropheIndicator() {
+            const indicator = document.getElementById('catastrophe-indicator');
+            if (indicator) {
+                indicator.classList.remove('hidden');
+            }
+        }
+
+        function hideCatastropheIndicator() {
+            const indicator = document.getElementById('catastrophe-indicator');
+            if (indicator) {
+                indicator.classList.add('hidden');
+            }
+        }
+
+        function updateWorkerAnimations() {
+            // Randomly toggle worker animations to simulate work activity
+            const workers = document.querySelectorAll('.worker');
+            workers.forEach(worker => {
+                if (Math.random() < 0.4) {
+                    worker.classList.toggle('working');
+                }
+            });
+        }
+
+        function render() {
+            if (backgroundCtx) {
+                const backgroundCanvas = document.getElementById('background-canvas');
+                backgroundCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+                drawAmbientEffects(backgroundCtx, backgroundCanvas.width, backgroundCanvas.height);
+            }
+
+            Object.keys(canvases).forEach(type => {
+                const ctx = canvases[type];
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                if (ctx && canvas) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            });
+
+            Object.keys(gameState.belts).forEach(type => {
+                const ctx = canvases[type];
+                const belt = gameState.belts[type];
+                if (ctx && belt && belt.parts) {
+                    belt.parts.forEach(part => {
+                        if (part && typeof part.draw === 'function') {
+                            part.draw(ctx);
+                        }
+                    });
+                }
+            });
+
+            if (productionChart) {
+                drawProductionChart();
+            }
+        }
+
+        function drawAmbientEffects(ctx, width, height) {
+            // Draw subtle scanning lines
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            
+            const time = Date.now() * 0.001;
+            for (let i = 0; i < 3; i++) {
+                const y = (time * 50 + i * height / 3) % height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            
+            // Add flickering grid pattern
+            ctx.strokeStyle = 'rgba(138, 43, 226, 0.05)';
+            ctx.lineWidth = 0.5;
+            
+            const gridSize = 40;
+            const offset = (time * 10) % gridSize;
+            
+            for (let x = -offset; x < width + gridSize; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            
+            for (let y = -offset; y < height + gridSize; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawProductionChart() {
+            const canvas = document.getElementById('production-chart');
+            const ctx = productionChart;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const history = gameState.statistics.productionHistory;
+            if (history.length < 2) {
+                // Show "No data" message
+                ctx.fillStyle = '#888888';
+                ctx.font = '16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('No production data yet...', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // Chart margins for axes and labels (increased top margin for title padding)
+            const margin = { top: 45, right: 35, bottom: 60, left: 70 };
+            const chartWidth = canvas.width - margin.left - margin.right;
+            const chartHeight = canvas.height - margin.top - margin.bottom;
+            
+            // Calculate data ranges
+            const maxValue = Math.max(...history.map(h => h.robotsPerMinute));
+            const minValue = 0;
+            const valueRange = maxValue - minValue;
+            
+            // Time range - adjusted for faster updates
+            const now = Date.now();
+            const timeSpan = 2 * 60 * 1000; // 2 minutes
+            
+            // Get current theme colors
+            const themeColors = getCurrentThemeColors();
+            
+            // Draw background grid using theme colors
+            ctx.strokeStyle = `rgba(${hexToRgb(themeColors.secondary)}, 0.2)`;
+            ctx.lineWidth = 1;
+            
+            // Horizontal grid lines (for values) - reduced to prevent overlap
+            const numHorizontalLines = 4;
+            for (let i = 0; i <= numHorizontalLines; i++) {
+                const y = margin.top + (chartHeight * i / numHorizontalLines);
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(margin.left + chartWidth, y);
+                ctx.stroke();
+                
+                // Y-axis labels (production values) - better positioning
+                const value = maxValue - (valueRange * i / numHorizontalLines);
+                ctx.fillStyle = themeColors.secondary;
+                ctx.font = '11px Inter';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Math.round(value).toString(), margin.left - 15, y);
+            }
+            
+            // Vertical grid lines (for time) - reduced to prevent overlap
+            const numVerticalLines = 4;
+            for (let i = 0; i <= numVerticalLines; i++) {
+                const x = margin.left + (chartWidth * i / numVerticalLines);
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top);
+                ctx.lineTo(x, margin.top + chartHeight);
+                ctx.stroke();
+                
+                // X-axis labels (time) - meaningful time labels in correct order
+                const timeOffset = (timeSpan * (numVerticalLines - i) / numVerticalLines) / 1000; // seconds ago
+                let timeLabel;
+                if (i === numVerticalLines) {
+                    timeLabel = 'Now';
+                } else if (timeOffset < 60) {
+                    timeLabel = `${Math.round(timeOffset)}s`;
+                } else {
+                    const minutes = timeOffset / 60;
+                    if (minutes === Math.floor(minutes)) {
+                        timeLabel = `${Math.floor(minutes)}m`;
+                    } else {
+                        timeLabel = `${minutes.toFixed(1)}m`;
+                    }
+                }
+                ctx.fillStyle = themeColors.secondary;
+                ctx.font = '10px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(timeLabel, x, margin.top + chartHeight + 10);
+            }
+            
+            // Draw axes using theme colors
+            ctx.strokeStyle = themeColors.primary;
+            ctx.lineWidth = 2;
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + chartHeight);
+            ctx.stroke();
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top + chartHeight);
+            ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
+            ctx.stroke();
+            
+            // Draw axis labels with proper spacing using theme colors
+            ctx.fillStyle = themeColors.primary;
+            ctx.font = 'bold 13px Inter';
+            
+            // Y-axis label
+            ctx.save();
+            ctx.translate(20, margin.top + chartHeight / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Robots/Min', 0, 0);
+            ctx.restore();
+            
+            // X-axis label
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('Time', margin.left + chartWidth / 2, canvas.height - 8);
+            
+            // Draw the production line using theme colors
+            if (maxValue > 0) {
+                ctx.strokeStyle = themeColors.primary;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                let firstPoint = true;
+                history.forEach((point, index) => {
+                    const x = margin.left + (index / (history.length - 1)) * chartWidth;
+                    const y = margin.top + chartHeight - ((point.robotsPerMinute - minValue) / valueRange) * chartHeight;
+                    
+                    if (firstPoint) {
+                        ctx.moveTo(x, y);
+                        firstPoint = false;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // Draw data points using theme colors
+                ctx.fillStyle = themeColors.primary;
+                history.forEach((point, index) => {
+                    const x = margin.left + (index / (history.length - 1)) * chartWidth;
+                    const y = margin.top + chartHeight - ((point.robotsPerMinute - minValue) / valueRange) * chartHeight;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // Add glow effect to the line using theme colors
+                ctx.shadowColor = themeColors.primary;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Add title using theme colors with more padding
+            ctx.fillStyle = themeColors.primary;
+            ctx.font = 'bold 16px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('Production Rate Over Time', canvas.width / 2, 25);
+            
+            // Add current value indicator with better positioning using theme colors
+            if (history.length > 0) {
+                const currentValue = history[history.length - 1].robotsPerMinute;
+                ctx.fillStyle = themeColors.accent;
+                ctx.font = 'bold 12px Inter';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.fillText(`Current: ${Math.round(currentValue)} robots/min`, canvas.width - 15, margin.top + 5);
+            }
+        }
+
+        function updateProductionStats() {
+            // Add to production history every 2 seconds for more dynamic updates
+            if (Date.now() % 2000 < 100) {
+                gameState.statistics.productionHistory.push({
+                    timestamp: Date.now(),
+                    robotsPerMinute: gameState.robotsAssembled * 30, // Extrapolate to per minute (60/2=30)
+                    efficiency: gameState.efficiency
+                });
+                
+                // Keep only last 30 points (1 minute of data at 2-second intervals)
+                if (gameState.statistics.productionHistory.length > 30) {
+                    gameState.statistics.productionHistory.shift();
+                }
+            }
+        }
+
+        function updateUI() {
+            // Update money display
+            document.getElementById('money').textContent = '$' + Math.floor(gameState.money);
+            
+            // Update efficiency with color coding for research effects
+            const efficiencyElement = document.getElementById('efficiency');
+            if (efficiencyElement) {
+                const efficiencyBoostEnabled = researchTree['efficiency-boost'] && researchTree['efficiency-boost'].enabled;
+                efficiencyElement.textContent = Math.floor(gameState.efficiency) + '%';
+                efficiencyElement.style.color = efficiencyBoostEnabled ? '#00ff41' : '#e0e0e0';
+            }
+            
+            // Update robots assembled
+            document.getElementById('robots-assembled').textContent = gameState.robotsAssembled;
+            
+            // Update potential income with Premium Sales indicator
+            const potentialIncome = gameState.robotsAssembled * 50 * gameState.qualityMultiplier;
+            const potentialIncomeElement = document.getElementById('potential-income');
+            if (potentialIncomeElement) {
+                const premiumSalesEnabled = researchTree['income-multiplier'] && researchTree['income-multiplier'].enabled;
+                potentialIncomeElement.textContent = '$' + Math.floor(potentialIncome);
+                potentialIncomeElement.style.color = premiumSalesEnabled ? '#ffd700' : '#4ade80';
+                if (premiumSalesEnabled) {
+                    potentialIncomeElement.style.textShadow = '0 0 8px #ffd700';
+                } else {
+                    potentialIncomeElement.style.textShadow = 'none';
+                }
+            }
+            
+            // Update parts inventory
+            Object.keys(gameState.partsInventory).forEach(part => {
+                const inventory = gameState.partsInventory[part];
+                const stockElement = document.getElementById(`${part}s-stock`);
+                const progressElement = document.getElementById(`${part}s-progress`);
+                
+                if (stockElement) {
+                    stockElement.textContent = `${inventory.current} / ${inventory.max}`;
+                }
+                if (progressElement) {
+                    progressElement.style.width = `${(inventory.current / inventory.max) * 100}%`;
+                }
+            });
+            
+            // Update prestige points
+            const prestigeElement = document.getElementById('prestige-points');
+            if (prestigeElement) {
+                prestigeElement.textContent = gameState.prestigePoints;
+            }
+            
+            // Enable/disable sell button
+            const sellButton = document.getElementById('sell-robots-btn');
+            if (sellButton) {
+                sellButton.disabled = gameState.robotsAssembled === 0;
+            }
+            
+            // Enable/disable prestige button
+            const prestigeButton = document.getElementById('prestige-btn');
+            if (prestigeButton) {
+                if (gameState.prestigeUnlocked) {
+                    prestigeButton.style.display = 'block';
+                    prestigeButton.disabled = gameState.money < 10000;
+                    prestigeButton.textContent = gameState.money >= 10000 ? 
+                        `Prestige (+${Math.floor(gameState.money / 1000)} points)` : 
+                        `Prestige (Need $${10000 - gameState.money} more)`;
+                } else {
+                    prestigeButton.style.display = 'none';
+                }
+            }
+            
+            // Update research tree only when money changes
+            if (Math.floor(gameState.money) !== lastMoneyAmount) {
+                lastMoneyAmount = Math.floor(gameState.money);
+                updateResearchAffordability();
+                updateInsuranceUI();
+            }
+        }
+
+        function updateResearchAffordability() {
+            // Only update if research tree exists and is visible
+            const researchContainer = document.getElementById('research-tree');
+            if (!researchContainer || researchContainer.children.length === 0) return;
+            
+            // Update each research card's affordability without full re-render
+            Object.keys(researchTree).forEach((id, index) => {
+                const research = researchTree[id];
+                const canAfford = gameState.money >= research.cost;
+                const cardElement = researchContainer.children[index];
+                
+                if (cardElement && !research.purchased) {
+                    const button = cardElement.querySelector('.research-btn');
+                    if (button) {
+                        if (canAfford) {
+                            button.className = 'research-btn px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white';
+                            button.disabled = false;
+                        } else {
+                            button.className = 'research-btn px-4 py-2 rounded-lg bg-gray-600 text-gray-400 cursor-not-allowed';
+                            button.disabled = true;
+                        }
+                    }
+                    
+                    // Update border color
+                    if (canAfford) {
+                        cardElement.className = cardElement.className.replace('border-gray-600', 'border-purple-500');
+                    } else {
+                        cardElement.className = cardElement.className.replace('border-purple-500', 'border-gray-600');
+                    }
+                }
+            });
+        }
+
+        function initializeResearchTree() {
+            const researchContainer = document.getElementById('research-tree');
+            if (!researchContainer) return;
+            
+            researchContainer.innerHTML = '';
+            
+            Object.keys(researchTree).forEach(id => {
+                const research = researchTree[id];
+                const canAfford = gameState.money >= research.cost;
+                const researchElement = document.createElement('div');
+                
+                let statusClass = 'border-gray-600';
+                if (research.purchased && research.enabled) {
+                    statusClass = 'border-green-500 bg-green-900 bg-opacity-20';
+                } else if (research.purchased) {
+                    statusClass = 'border-yellow-500 bg-yellow-900 bg-opacity-20';
+                } else if (canAfford) {
+                    statusClass = 'border-purple-500';
+                }
+                
+                researchElement.className = `p-4 rounded-lg border ${statusClass} transition-all`;
+                researchElement.style.backgroundColor = 'var(--bg-secondary)';
+                researchElement.style.borderColor = research.purchased && research.enabled ? 'var(--accent-color)' : 
+                                                   research.purchased ? 'var(--secondary-color)' : 
+                                                   canAfford ? 'var(--primary-color)' : 'var(--bg-tertiary)';
+                researchElement.addEventListener('mouseenter', () => {
+                    if (!research.purchased || !research.enabled) {
+                        researchElement.style.borderColor = 'var(--primary-color)';
+                    }
+                });
+                researchElement.addEventListener('mouseleave', () => {
+                    researchElement.style.borderColor = research.purchased && research.enabled ? 'var(--accent-color)' : 
+                                                       research.purchased ? 'var(--secondary-color)' : 
+                                                       canAfford ? 'var(--primary-color)' : 'var(--bg-tertiary)';
+                });
+                
+                let buttonContent = '';
+                if (!research.purchased) {
+                    buttonContent = `
+                        <button class="research-btn px-4 py-2 rounded-lg font-bold transition-colors" 
+                                ${!canAfford ? 'disabled' : ''} 
+                                onclick="purchaseResearch('${id}')"
+                                style="background-color: ${canAfford ? 'var(--secondary-color)' : 'var(--bg-tertiary)'}; color: ${canAfford ? 'var(--text-primary)' : 'var(--text-secondary)'};">
+                            Buy - $${research.cost}
+                        </button>
+                    `;
+                } else {
+                    buttonContent = `
+                        <div class="flex gap-2 items-center">
+                            <span class="font-bold text-sm" style="color: var(--accent-color);">Owned</span>
+                            <button class="toggle-btn px-3 py-1 rounded text-sm font-bold transition-colors" 
+                                    onclick="toggleResearch('${id}')"
+                                    style="background-color: ${research.enabled ? 'var(--accent-color)' : 'var(--bg-tertiary)'}; color: var(--text-primary);">
+                                ${research.enabled ? 'ON' : 'OFF'}
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                researchElement.innerHTML = `
+                    <h4 class="text-lg font-bold mb-2" style="color: ${research.enabled ? 'var(--accent-color)' : research.purchased ? 'var(--secondary-color)' : 'var(--primary-color)'};">
+                        ${research.name}
+                        ${research.enabled ? ' ✓' : research.purchased ? ' ⚪' : ''}
+                    </h4>
+                    <p class="text-sm mb-3" style="color: var(--text-secondary);">${research.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold" style="color: var(--primary-color);">$${research.cost}</span>
+                        ${buttonContent}
+                    </div>
+                `;
+                
+                researchContainer.appendChild(researchElement);
+            });
+        }
+
+        function purchaseResearch(id) {
+            const research = researchTree[id];
+            if (research && !research.purchased && gameState.money >= research.cost) {
+                gameState.money -= research.cost;
+                research.purchased = true;
+                
+                // Ensure arrays exist
+                if (!gameState.research.purchased) {
+                    gameState.research.purchased = [];
+                }
+                
+                if (!gameState.research.purchased.includes(id)) {
+                    gameState.research.purchased.push(id);
+                }
+                
+                // Store base values when first purchasing
+                storeBaseValues(id);
+                
+                console.log(`Purchased research: ${research.name}`);
+                initializeResearchTree();
+            }
+        }
+
+        function toggleResearch(id) {
+            const research = researchTree[id];
+            if (!research || !research.purchased) return;
+
+            // Ensure arrays exist
+            if (!gameState.research.enabled) {
+                gameState.research.enabled = [];
+            }
+
+            if (research.enabled) {
+                // Disable research
+                research.enabled = false;
+                gameState.research.enabled = gameState.research.enabled.filter(researchId => researchId !== id);
+                removeResearchEffect(id);
+                console.log(`Disabled research: ${research.name}`);
+            } else {
+                // Enable research
+                research.enabled = true;
+                if (!gameState.research.enabled.includes(id)) {
+                    gameState.research.enabled.push(id);
+                }
+                applyResearchEffect(id);
+                console.log(`Enabled research: ${research.name}`);
+            }
+            
+            initializeResearchTree();
+        }
+
+        function storeBaseValues(id) {
+            const research = researchTree[id];
+            
+            switch(id) {
+                case 'speed-boost':
+                    if (!research.baseRates) {
+                        research.baseRates = { ...gameState.production.ratesPerSecond };
+                    }
+                    break;
+                case 'quality-improvement':
+                    if (!research.baseQuality) {
+                        research.baseQuality = gameState.production.qualityChance;
+                    }
+                    break;
+                case 'income-multiplier':
+                    if (!research.baseMultiplier) {
+                        research.baseMultiplier = gameState.qualityMultiplier;
+                    }
+                    break;
+                case 'efficiency-boost':
+                    if (!research.baseEfficiency) {
+                        research.baseEfficiency = gameState.efficiency;
+                    }
+                    break;
+                case 'inventory-expansion':
+                    if (!research.baseCapacities) {
+                        research.baseCapacities = {};
+                        Object.keys(gameState.partsInventory).forEach(part => {
+                            research.baseCapacities[part] = gameState.partsInventory[part].max;
+                        });
+                    }
+                    break;
+            }
+        }
+
+        function applyResearchEffect(id) {
+            const research = researchTree[id];
+            
+            switch(id) {
+                case 'speed-boost':
+                    // Increase production speed by 50%
+                    Object.keys(gameState.production.ratesPerSecond).forEach(part => {
+                        gameState.production.ratesPerSecond[part] = research.baseRates[part] * 1.5;
+                    });
+                    console.log('Speed Boost enabled - Production rates increased by 50%');
+                    break;
+                    
+                case 'quality-improvement':
+                    // Improve quality control to 95% success rate
+                    gameState.production.qualityChance = 0.95;
+                    console.log('Quality Control enabled - Success rate: 95%');
+                    break;
+                    
+                case 'auto-inspection':
+                    // Enable automatic quality checks
+                    gameState.autoInspection = true;
+                    console.log('Auto Inspector enabled - Automatic QC near checkpoints');
+                    break;
+                    
+                case 'income-multiplier':
+                    // Triple robot sale price
+                    gameState.qualityMultiplier = research.baseMultiplier * 3;
+                    console.log('Premium Sales enabled - Robot sale price tripled');
+                    break;
+                    
+                case 'efficiency-boost':
+                    // Increase factory efficiency to 150%
+                    gameState.efficiency = 150;
+                    console.log('Factory Optimization enabled - Efficiency: 150%');
+                    break;
+                    
+                case 'inventory-expansion':
+                    // Double all inventory capacities
+                    Object.keys(gameState.partsInventory).forEach(part => {
+                        gameState.partsInventory[part].max = research.baseCapacities[part] * 2;
+                    });
+                    console.log('Storage Upgrade enabled - All capacities doubled');
+                    break;
+                    
+                case 'rapid-assembly':
+                    // Enable rapid assembly (3 robots at once)
+                    gameState.rapidAssembly = true;
+                    console.log('Rapid Assembly enabled - 3x assembly speed');
+                    break;
+                    
+                case 'prestige-unlock':
+                    // Unlock prestige system
+                    gameState.prestigeUnlocked = true;
+                    
+                    // Make prestige button visible if it exists
+                    const prestigeBtn = document.getElementById('prestige-btn');
+                    if (prestigeBtn) {
+                        prestigeBtn.style.display = 'block';
+                        prestigeBtn.disabled = gameState.money < 10000;
+                    }
+                    console.log('Era Advancement enabled - Prestige system unlocked');
+                    break;
+            }
+        }
+
+        function removeResearchEffect(id) {
+            const research = researchTree[id];
+            
+            switch(id) {
+                case 'speed-boost':
+                    // Restore original production rates
+                    Object.keys(gameState.production.ratesPerSecond).forEach(part => {
+                        gameState.production.ratesPerSecond[part] = research.baseRates[part];
+                    });
+                    console.log('Speed Boost disabled - Production rates restored');
+                    break;
+                    
+                case 'quality-improvement':
+                    // Restore original quality chance
+                    gameState.production.qualityChance = research.baseQuality || 0.8;
+                    console.log('Quality Control disabled - Success rate restored to', (research.baseQuality || 0.8) * 100 + '%');
+                    break;
+                    
+                case 'auto-inspection':
+                    // Disable automatic quality checks
+                    gameState.autoInspection = false;
+                    console.log('Auto Inspector disabled - Manual QC only');
+                    break;
+                    
+                case 'income-multiplier':
+                    // Restore original multiplier
+                    gameState.qualityMultiplier = research.baseMultiplier || 1;
+                    console.log('Premium Sales disabled - Normal robot prices');
+                    break;
+                    
+                case 'efficiency-boost':
+                    // Restore original efficiency
+                    gameState.efficiency = research.baseEfficiency || 100;
+                    console.log('Factory Optimization disabled - Efficiency restored to', research.baseEfficiency || 100, '%');
+                    break;
+                    
+                case 'inventory-expansion':
+                    // Restore original capacities
+                    Object.keys(gameState.partsInventory).forEach(part => {
+                        gameState.partsInventory[part].max = research.baseCapacities[part];
+                        // Don't exceed new limits
+                        if (gameState.partsInventory[part].current > gameState.partsInventory[part].max) {
+                            gameState.partsInventory[part].current = gameState.partsInventory[part].max;
+                        }
+                    });
+                    console.log('Storage Upgrade disabled - Original capacities restored');
+                    break;
+                    
+                case 'rapid-assembly':
+                    // Disable rapid assembly
+                    gameState.rapidAssembly = false;
+                    console.log('Rapid Assembly disabled - Normal assembly speed');
+                    break;
+                    
+                case 'prestige-unlock':
+                    // Can't disable prestige once unlocked (permanent)
+                    console.log('Era Advancement cannot be disabled - Permanent unlock');
+                    break;
+            }
+        }
+
+        function showAdvancementTab(tab) {
+            document.getElementById('research-view').classList.toggle('hidden', tab !== 'research');
+            document.getElementById('prestige-view').classList.toggle('hidden', tab !== 'prestige');
+            
+            document.getElementById('adv-tab-research').classList.toggle('active', tab === 'research');
+            document.getElementById('adv-tab-prestige').classList.toggle('active', tab === 'prestige');
+        }
+
+        function showCatastropheModal() {
+            if (gameState.catastrophe) {
+                const modal = document.getElementById('catastrophe-modal');
+                const title = document.getElementById('catastrophe-title');
+                const message = document.getElementById('catastrophe-message');
+                const buttons = document.getElementById('catastrophe-buttons');
+                
+                title.textContent = gameState.catastrophe.name;
+                message.textContent = gameState.catastrophe.description;
+                
+                buttons.innerHTML = `
+                    <button onclick="closeCatastropheModal()">Accept</button>
+                    <button class="confirm" onclick="fixCatastrophe()">Fix ($${Math.floor(gameState.money * 0.1)})</button>
+                `;
+                
+                modal.classList.add('modal-active');
+            }
+        }
+
+        function closeCatastropheModal() {
+            const modal = document.getElementById('catastrophe-modal');
+            modal.classList.remove('modal-active');
+        }
+
+        function fixCatastrophe() {
+            const cost = Math.floor(gameState.money * 0.1);
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                endCatastrophe();
+                closeCatastropheModal();
+            }
+        }
+
+        function performPrestige() {
+            if (gameState.money >= 10000 && gameState.prestigeUnlocked) {
+                const prestigeGained = Math.floor(gameState.money / 1000);
+                gameState.prestigePoints += prestigeGained;
+                
+                console.log(`Performing prestige! Gained ${prestigeGained} prestige points.`);
+                
+                // Reset game state but keep prestige bonuses and research
+                gameState.money = 2000; // Start with some money
+                gameState.robotsAssembled = 0;
+                Object.keys(gameState.partsInventory).forEach(part => {
+                    gameState.partsInventory[part].current = 0;
+                });
+                Object.keys(gameState.belts).forEach(type => {
+                    gameState.belts[type].parts = [];
+                });
+                
+                // Apply prestige bonuses to production rates
+                Object.keys(gameState.production.ratesPerSecond).forEach(part => {
+                    gameState.production.ratesPerSecond[part] *= (1 + gameState.prestigePoints * 0.1);
+                });
+                
+                console.log(`Total prestige points: ${gameState.prestigePoints}. Production bonus: ${Math.floor(gameState.prestigePoints * 10)}%`);
+                
+                // Show prestige notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(45deg, #8a2be2, #b347d9);
+                    color: white;
+                    padding: 20px 40px;
+                    border-radius: 15px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    z-index: 9999;
+                    box-shadow: 0 0 30px #8a2be2;
+                    text-align: center;
+                    animation: pulse 2s infinite;
+                `;
+                notification.innerHTML = `⭐ PRESTIGE ACHIEVED! ⭐<br><span style="font-size: 14px;">+${prestigeGained} Prestige Points<br>Production Speed +${Math.floor(gameState.prestigePoints * 10)}%</span>`;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.parentElement.removeChild(notification);
+                    }
+                }, 4000);
+            } else if (!gameState.prestigeUnlocked) {
+                console.log('Prestige system not unlocked yet. Purchase Era Advancement research first.');
+            } else {
+                console.log('Need at least $10,000 to prestige.');
+            }
+        }
+
+        function saveGameState() {
+            try {
+                // Create a copy of gameState without the parts (which contain methods)
+                const saveData = {
+                    ...gameState,
+                    belts: Object.keys(gameState.belts).reduce((acc, type) => {
+                        acc[type] = {
+                            spawnTimer: gameState.belts[type].spawnTimer,
+                            parts: []
+                        };
+                        return acc;
+                    }, {}),
+                    moneyButtonCooldown: moneyButtonCooldown,
+                    moneyButtonCooldownStartTime: moneyButtonCooldown > 0 ? Date.now() : null
+                };
+                
+                localStorage.setItem('robotFactoryGame', JSON.stringify(saveData));
+            } catch (error) {
+                console.error('Error saving game state:', error);
+            }
+        }
+
+        function loadGameState() {
+            const saved = localStorage.getItem('robotFactoryGame');
+            if (saved) {
+                try {
+                    const loadedState = JSON.parse(saved);
+                    Object.assign(gameState, loadedState);
+                    
+                    // Ensure belts are properly initialized
+                    Object.keys(gameState.belts).forEach(type => {
+                        if (!gameState.belts[type].parts) {
+                            gameState.belts[type].parts = [];
+                        }
+                        if (typeof gameState.belts[type].spawnTimer === 'undefined') {
+                            gameState.belts[type].spawnTimer = 0;
+                        }
+                    });
+                    
+                    // Ensure research object is properly initialized
+                    if (!gameState.research) {
+                        gameState.research = {
+                            purchased: [],
+                            enabled: []
+                        };
+                    } else {
+                        if (!gameState.research.purchased) {
+                            gameState.research.purchased = [];
+                        }
+                                            if (!gameState.research.enabled) {
+                        gameState.research.enabled = [];
+                    }
+                    
+                    if (gameState.research.points !== undefined) {
+                        delete gameState.research.points;
+                    }
+                    if (gameState.research.unlocked !== undefined) {
+                        delete gameState.research.unlocked;
+                    }
+                }
+                
+                if (!gameState.insurance) {
+                    gameState.insurance = {
+                        policies: [],
+                        premiumsDue: 0,
+                        lastPremiumTime: Date.now()
+                    };
+                }
+
+                    // Restore money button cooldown
+                    if (loadedState.moneyButtonCooldown && loadedState.moneyButtonCooldownStartTime) {
+                        const timePassed = Math.floor((Date.now() - loadedState.moneyButtonCooldownStartTime) / 1000);
+                        moneyButtonCooldown = Math.max(0, loadedState.moneyButtonCooldown - timePassed);
+                        
+                        if (moneyButtonCooldown > 0) {
+                            setTimeout(() => {
+                                startMoneyButtonCooldown();
+                            }, 1000); // Start after UI is ready
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading saved game:', error);
+                    // Clear corrupted save data
+                    localStorage.removeItem('robotFactoryGame');
+                }
+            }
+        }
+
+        function startGameLoop() {
+            setInterval(updateGame, 100); // 10 FPS for smooth animation
+            setInterval(saveGameState, 5000); // Save every 5 seconds
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initGame);
+        
+        // Backup initialization with timeout
+        setTimeout(() => {
+            if (Object.keys(canvases).length === 0) {
+                console.log('Backup initialization triggered');
+                initGame();
+            }
+        }, 2000);
+
+        // Reset game function
+        function resetGame() {
+            console.log('Resetting game...');
+            localStorage.removeItem('robotFactoryGame');
+            location.reload();
+        }
+
+        // Debug function to add money for testing (with cooldown)
+        function addMoney() {
+            if (moneyButtonCooldown <= 0) {
+                gameState.money += 5000;
+                console.log('Added $5000. Current money:', gameState.money);
+                
+                // Start cooldown (60 seconds)
+                moneyButtonCooldown = 60;
+                startMoneyButtonCooldown();
+            }
+        }
+
+        // Debug function to spawn test parts
+        function spawnTestParts() {
+            console.log('Manually spawning test parts...');
+            Object.keys(gameState.belts).forEach(type => {
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                if (canvas && canvas.width > 0) {
+                    const partWidth = 40;
+                    const minX = partWidth / 2;
+                    const maxX = canvas.width - partWidth / 2;
+                    const x = Math.random() * (maxX - minX) + minX;
+                    
+                    const part = new Part(type, x, 30);
+                    gameState.belts[type].parts.push(part);
+                    console.log(`Spawned ${type} part at ${x}, total parts: ${gameState.belts[type].parts.length}`);
+                } else {
+                    console.log(`Cannot spawn ${type} part - canvas not ready`);
+                }
+            });
+        }
+
+        function startMoneyButtonCooldown() {
+            const button = document.getElementById('money-button');
+            if (!button) return;
+            
+            // Disable button and update text
+            button.disabled = true;
+            button.className = 'bg-gray-600 text-gray-400 px-4 py-2 rounded mr-2 cursor-not-allowed';
+            
+            // Clear existing timer if any
+            if (moneyButtonTimer) {
+                clearInterval(moneyButtonTimer);
+            }
+            
+            // Start countdown timer
+            moneyButtonTimer = setInterval(() => {
+                moneyButtonCooldown--;
+                
+                if (moneyButtonCooldown <= 0) {
+                    // Cooldown finished
+                    button.disabled = false;
+                    button.className = 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mr-2 transition-colors';
+                    button.textContent = '💰 +$5000';
+                    clearInterval(moneyButtonTimer);
+                    moneyButtonTimer = null;
+                    console.log('Money button cooldown finished - button re-enabled');
+                } else {
+                    // Update countdown text
+                    const minutes = Math.floor(moneyButtonCooldown / 60);
+                    const seconds = moneyButtonCooldown % 60;
+                    button.textContent = `💰 ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // Theme Management Functions
+        function openThemeModal() {
+            const modal = document.getElementById('theme-modal');
+            populateThemeGrid();
+            modal.classList.add('modal-active');
+        }
+
+        function closeThemeModal() {
+            const modal = document.getElementById('theme-modal');
+            modal.classList.remove('modal-active');
+        }
+
+        function populateThemeGrid() {
+            const grid = document.getElementById('theme-grid');
+            grid.innerHTML = '';
+
+            Object.keys(themes).forEach(themeId => {
+                const theme = themes[themeId];
+                const isOwned = gameState.themes.purchased.includes(themeId);
+                const isActive = gameState.themes.current === themeId;
+                const canAfford = gameState.prestigePoints >= theme.cost;
+
+                const card = document.createElement('div');
+                card.className = `theme-card bg-gray-800 p-4 rounded-lg border-2 transition-all ${
+                    isActive ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 
+                    isOwned ? 'border-green-400' : 
+                    canAfford ? 'border-purple-400 hover:border-purple-300' : 'border-gray-600'
+                }`;
+
+                card.innerHTML = `
+                    <div class="theme-preview w-full h-16 rounded-lg mb-3" style="background: ${theme.preview};"></div>
+                    <h3 class="text-lg font-bold mb-2 ${isActive ? 'text-yellow-400' : isOwned ? 'text-green-400' : 'text-white'}">${theme.name}</h3>
+                    <p class="text-sm text-gray-300 mb-4">${theme.description}</p>
+                    
+                    ${isActive ? 
+                        '<div class="text-center py-2 px-4 bg-yellow-600 text-white rounded font-bold">✓ ACTIVE</div>' :
+                    isOwned ? 
+                        `<button onclick="applyTheme('${themeId}')" class="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded font-bold transition-colors">Select Theme</button>` :
+                    canAfford ?
+                        `<button onclick="purchaseTheme('${themeId}')" class="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded font-bold transition-colors">Buy - ${theme.cost} PP</button>` :
+                        `<div class="text-center py-2 px-4 bg-gray-600 text-gray-400 rounded font-bold">Need ${theme.cost} PP</div>`
+                    }
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function purchaseTheme(themeId) {
+            const theme = themes[themeId];
+            if (gameState.prestigePoints >= theme.cost && !gameState.themes.purchased.includes(themeId)) {
+                gameState.prestigePoints -= theme.cost;
+                gameState.themes.purchased.push(themeId);
+                
+                // Show purchase notification
+                showThemeNotification(`🎨 ${theme.name} purchased!`, 'success');
+                
+                // Refresh the theme grid
+                populateThemeGrid();
+                updateUI();
+                
+                console.log(`Purchased theme: ${theme.name} for ${theme.cost} PP`);
+            }
+        }
+
+        function applyTheme(themeId) {
+            if (gameState.themes.purchased.includes(themeId)) {
+                // Remove current theme class
+                const currentTheme = themes[gameState.themes.current];
+                if (currentTheme && currentTheme.cssClass) {
+                    document.body.classList.remove(currentTheme.cssClass);
+                }
+                
+                // Apply new theme
+                gameState.themes.current = themeId;
+                const newTheme = themes[themeId];
+                if (newTheme.cssClass) {
+                    document.body.classList.add(newTheme.cssClass);
+                }
+                
+                // Show theme change notification
+                showThemeNotification(`🎨 ${newTheme.name} activated!`, 'theme-change');
+                
+                // Refresh the theme grid to show new active state
+                populateThemeGrid();
+                
+                console.log(`Applied theme: ${newTheme.name}`);
+            }
+        }
+
+        function showThemeNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${type === 'success' ? 'linear-gradient(45deg, #10b981, #065f46)' : 'linear-gradient(45deg, #8b5cf6, #5b21b6)'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+                animation: slideInRight 0.5s ease-out;
+                opacity: 0;
+                transform: translateX(100%);
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.parentElement.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        // Billionaire's Son - Unlock everything for testing
+        function billionairesSon() {
+            console.log('BILLIONAIRE\'S SON MODE ACTIVATED!');
+            
+            // Give massive money
+            gameState.money = 1000000;
+            console.log('Added $1,000,000');
+            
+            // Give prestige points
+            gameState.prestigePoints = 100;
+            console.log('Added 100 prestige points');
+            
+            // Unlock all themes
+            gameState.themes.purchased = Object.keys(themes);
+            console.log('Unlocked all themes');
+            
+            // Purchase and enable ALL research
+            Object.keys(researchTree).forEach(id => {
+                const research = researchTree[id];
+                if (!research.purchased) {
+                    // Store base values first
+                    storeBaseValues(id);
+                    
+                    // Purchase research
+                    research.purchased = true;
+                    if (!gameState.research.purchased.includes(id)) {
+                        gameState.research.purchased.push(id);
+                    }
+                    
+                    // Enable research
+                    research.enabled = true;
+                    if (!gameState.research.enabled.includes(id)) {
+                        gameState.research.enabled.push(id);
+                    }
+                    
+                    // Apply effect
+                    applyResearchEffect(id);
+                    
+                    console.log(`Unlocked and enabled: ${research.name}`);
+                }
+            });
+            
+            // Add some parts to inventory for immediate testing
+            gameState.partsInventory.head.current = 5;
+            gameState.partsInventory.chest.current = 5;
+            gameState.partsInventory.arm.current = 10;
+            gameState.partsInventory.leg.current = 10;
+            
+            // Spawn some test parts on belts
+            Object.keys(gameState.belts).forEach(type => {
+                const canvas = document.getElementById(`belt-canvas-${type}`);
+                if (canvas && canvas.width > 0) {
+                    const partWidth = 40;
+                    const minX = partWidth / 2;
+                    const maxX = canvas.width - partWidth / 2;
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const x = minX + (i * (maxX - minX) / 4); // Distribute across belt width
+                        const y = 50 + i * 60;
+                        const part = new Part(type, x, y);
+                        gameState.belts[type].parts.push(part);
+                    }
+                }
+            });
+            
+            // Update UI immediately
+            initializeResearchTree();
+            updateUI();
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(45deg, #ffd700, #ffed4e);
+                color: #000;
+                padding: 20px 40px;
+                border-radius: 15px;
+                font-size: 24px;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 0 30px #ffd700;
+                text-align: center;
+                animation: pulse 2s infinite;
+            `;
+            notification.innerHTML = '💰 BILLIONAIRE\'S SON MODE 💰<br><span style="font-size: 16px;">All research unlocked!</span>';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 3000);
+            
+            console.log('Billionaire\'s Son mode complete - Everything unlocked!');
+        }
+    </script>
+</body>
+</html>

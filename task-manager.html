@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Task Planner</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Support dark mode in Tailwind via class
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        /* CSS Custom Properties for Cohesive Color Palette */
+        :root {
+            --primary-color: #3b82f6; /* Blue-500 */
+            --primary-dark-color: #2563eb; /* Blue-600 */
+            --secondary-color: #6366f1; /* Indigo-500 */
+            --secondary-dark-color: #4f46e5; /* Indigo-600 */
+            --accent-color: #ec4899; /* Pink-500 */
+            --text-color: #333;
+            --text-light-color: #6b7280; /* Gray-500 */
+            --bg-light: #f0f2f5;
+            --bg-card: #ffffff;
+            --border-color: #e5e7eb; /* Gray-200 */
+
+            --high-priority-color: #10b981; /* Emerald-500 */
+            --medium-priority-color: #f59e0b; /* Amber-500 */
+            --low-priority-color: #64748b; /* Slate-500 */
+
+            --card-shadow-1: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-2: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --card-shadow-3: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Dark Mode Color Palette */
+        html.dark {
+            --primary-color: #60a5fa; /* Blue-400 */
+            --primary-dark-color: #3b82f6; /* Blue-500 */
+            --secondary-color: #818cf8; /* Indigo-400 */
+            --secondary-dark-color: #6366f1; /* Indigo-500 */
+            --accent-color: #f472b6; /* Pink-400 */
+            --text-color: #e5e7eb; /* Gray-200 */
+            --text-light-color: #9ca3af; /* Gray-400 */
+            --bg-light: #111827; /* Gray-900 */
+            --bg-card: #1f2937; /* Gray-800 */
+            --border-color: #374151; /* Gray-700 */
+
+            --high-priority-color: #34d399; /* Emerald-400 */
+            --medium-priority-color: #fbbf24; /* Amber-400 */
+            --low-priority-color: #94a3b8; /* Slate-400 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Subtle gradient background */
+            background: linear-gradient(to bottom right, #eff6ff, #eef2ff); /* Light blue to soft purple */
+            color: var(--text-color);
+            overflow: hidden; /* Prevent body scroll, let timeline handle it */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        html.dark body {
+             background: linear-gradient(to bottom right, var(--bg-light), #0f172a); /* Dark Slate */
+        }
+
+        /* Custom scrollbar for timeline on WebKit browsers */
+        .timeline-container::-webkit-scrollbar {
+            width: 8px;
+            background-color: transparent;
+        }
+
+        .timeline-container::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .timeline-container::-webkit-scrollbar-thumb:hover {
+            background-color: var(--text-light-color);
+        }
+
+        /* Smooth scrolling for quick navigation and momentum */
+        .timeline-container {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
+            position: relative;
+            background-color: var(--bg-card); /* Card-based background */
+            border-radius: 12px;
+            box-shadow: var(--card-shadow-1);
+            transition: background-color 0.3s ease;
+        }
+
+        /* Timeline vertical line and circular markers */
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 2rem; /* Position the line relative to hour markers */
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            z-index: 5;
+        }
+
+        .hour-marker {
+            position: relative;
+            height: 120px; /* 60px per 30 mins * 2 = 120px per hour */
+            /* border-bottom: 1px dashed var(--border-color); */
+            padding-left: 3rem; /* Space for line and marker */
+            background-color: var(--bg-card); /* Default background */
+            transition: background-color 0.3s ease;
+        }
+        /* Alternating background for timeline hours */
+        .hour-marker:nth-child(even) {
+            background-color: #fcfdff; /* Slightly different background for even hours */
+        }
+        html.dark .hour-marker:nth-child(even) {
+            background-color: #1f2937;
+        }
+
+        .hour-marker:first-child {
+            border-top: none;
+        }
+        .hour-marker:last-child {
+            border-bottom: none;
+        }
+
+        .hour-marker::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            z-index: 10;
+        }
+        .hour-marker:first-child::before {
+             top: 20px;
+        }
+        .hour-marker[data-time]::after {
+            content: attr(data-time);
+            position: absolute;
+            top: 0;
+            left: 6px;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light-color);
+            z-index: 5;
+            width: 2.5rem;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .hour-marker:first-child::after {
+            top: 20px;
+        }
+
+        .half-hour-line {
+            height: 60px;
+            border-bottom: 1px dotted var(--border-color);
+            position: relative; /* Needed for click functionality */
+            z-index: 1; /* Ensure task cards render on top of this */
+        }
+        .half-hour-line:last-child {
+            border-bottom: none;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        /* Task Card specific styles */
+        .task-card {
+            position: absolute;
+            width: calc(100% - 4rem); /* Full width minus horizontal padding and timeline line space */
+            left: 3.5rem; /* Position after timeline line */
+            cursor: grab;
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow-1);
+            padding: 0.75rem;
+            transition: transform 0.15s ease-out, background-color 0.2s ease-out, opacity 0.3s ease-out, box-shadow 0.2s ease-out;
+            touch-action: none; /* Prevent browser touch actions for dragging */
+            z-index: 10;
+            border-left: 8px solid; /* For priority color */
+        }
+
+        .task-card:active { /* Micro-interaction for touch */
+            transform: scale(0.98);
+            box-shadow: var(--card-shadow-2);
+        }
+
+        .task-card.dragging {
+            cursor: grabbing;
+            opacity: 0.8;
+            box-shadow: var(--card-shadow-3);
+            z-index: 20; /* Bring dragged card to front */
+            transform: translate3d(var(--drag-x, 0), var(--drag-y, 0), 0); /* For hardware acceleration */
+        }
+
+        .task-card.swiping-delete {
+            background-color: #fef2f2; /* Light red for initial swipe */
+            transition: background-color 0.2s ease-out, transform 0s; /* Instant color change, no transform transition */
+        }
+        html.dark .task-card.swiping-delete {
+             background-color: #452b2b;
+        }
+
+        .task-card.completed {
+            opacity: 0.7;
+            background-color: #f0fdf4; /* Light green for completed */
+        }
+        html.dark .task-card.completed {
+             background-color: #162a21;
+        }
+
+        .task-card.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(16, 185, 129, 0.7); /* Emerald green checkmark */
+            pointer-events: none;
+            z-index: 15;
+        }
+        html.dark .task-card.completed::after {
+            color: rgba(52, 211, 153, 0.6);
+        }
+
+        /* Swipe-to-delete trash icon */
+        .task-card .swipe-delete-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+            pointer-events: none;
+            z-index: 16;
+        }
+
+        .task-card.swiping-delete .swipe-delete-icon {
+            opacity: 1;
+        }
+
+        .task-card.swiping-delete .task-content {
+            opacity: 0.5;
+            transition: opacity 0.2s ease-out;
+        }
+
+        .task-card.swipe-ready {
+            transition: none !important;
+        }
+
+        .task-card.swipe-animating {
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                       background-color 0.3s ease-out,
+                       opacity 0.3s ease-out !important;
+        }
+
+        /* Priority colors */
+        .priority-low { border-left-color: var(--low-priority-color); }
+        .priority-medium { border-left-color: var(--medium-priority-color); }
+        .priority-high { border-left-color: var(--high-priority-color); }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+        }
+        .modal-content {
+            animation: slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* Smooth slide up */
+            max-height: 90vh; /* Max height for modal content */
+            overflow-y: auto; /* Allow scrolling within modal */
+            border-radius: 16px 16px 0 0; /* Rounded top corners */
+            box-shadow: var(--card-shadow-3);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0.5; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Haptic feedback simulation for buttons */
+        .btn-press:active {
+            transform: scale(0.95);
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Circular progress bar */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s ease-out; /* Smoother transition */
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Collapsible task details */
+        .task-notes-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out; /* Smoother transition */
+        }
+        .task-card.expanded .task-notes-container {
+            max-height: 200px; /* Arbitrary max height, adjust as needed */
+            padding-top: 0.5rem; /* Add padding when expanded */
+            overflow-y: auto;
+        }
+        .task-card.expanded .toggle-notes-icon {
+            transform: rotate(180deg);
+        }
+        .toggle-notes-icon {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Loading Overlay / Skeleton Screen (Simple Version) */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            z-index: 100;
+            transition: opacity 0.3s ease-out;
+        }
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Staggered animation for task cards */
+        .task-card.appear-animation {
+            animation: fadeInScaleUp 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px) scale(0.98);
+        }
+        @keyframes fadeInScaleUp {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Message box styling */
+        #message-box {
+            position: fixed;
+            bottom: 80px; /* Above add button */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 60;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #message-box.show {
+            opacity: 1;
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            z-index: 110; /* Above everything else */
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            pointer-events: none;
+            max-width: 200px;
+            text-align: center;
+        }
+        .tooltip.show {
+            opacity: 1;
+        }
+        .tooltip-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+        .tooltip-arrow.up {
+            border-width: 0 5px 5px 5px;
+            border-color: transparent transparent #333 transparent;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+         .tooltip-arrow.down {
+            border-width: 5px 5px 0 5px;
+            border-color: #333 transparent transparent transparent;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #tooltip-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 105;
+            cursor: pointer;
+        }
+
+        .task-placeholder {
+            position: absolute;
+            width: calc(100% - 4rem);
+            left: 3.5rem;
+            background-color: rgba(59, 130, 246, 0.1); /* light blue */
+            border: 2px dashed var(--primary-color);
+            border-radius: 12px;
+            z-index: 5;
+            transition: top 0.1s ease-out, background-color 0.2s, border-color 0.2s;
+        }
+
+        #custom-time-picker::-webkit-scrollbar {
+            width: 6px;
+        }
+        #custom-time-picker::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 3px;
+        }
+        .time-slot:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        html.dark .time-slot:hover {
+            background-color: rgba(96, 165, 250, 0.2);
+        }
+
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        Loading tasks...
+    </div>
+
+    <!-- Header and Progress Indicator -->
+    <header class="flex items-center justify-between p-4 bg-white dark:bg-gray-900 shadow-md rounded-b-xl relative z-30 transition-colors">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">Daily Planner</h1>
+
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="help-btn" class="p-2 rounded-full text-gray-500 hover:text-blue-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors" aria-label="Help">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4 0 1.105-.448 2.105-1.172 2.83-1.296 1.206-2.83 1.172-2.83 1.172M12 18h.01"></path></svg>
+            </button>
+            <div id="progress-indicator" class="relative w-12 h-12 flex-shrink-0 group">
+                <svg class="progress-ring" width="48" height="48">
+                    <circle
+                        class="progress-ring__background stroke-gray-200 dark:stroke-gray-700"
+                        stroke-width="4"
+                        fill="transparent"
+                        r="20"
+                        cx="24"
+                        cy="24"
+                    />
+                    <circle
+                        class="progress-ring__circle"
+                        stroke-width="4"
+                        fill="transparent"
+                        r="20"
+                        cx="24"
+                        cy="24"
+                        stroke-dasharray="125.6"
+                        stroke-dashoffset="125.6"
+                        stroke-linecap="round"
+                    />
+                </svg>
+                <span id="progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-300"></span>
+                <div id="progress-tooltip" class="absolute mb-2 left-1/2 -translate-x-1/2 w-max max-w-xs px-2 py-1 text-xs text-white bg-gray-900 dark:bg-gray-700 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                </div>
+            </div>
+            <button id="theme-toggle-btn" class="p-2 rounded-full text-gray-500 hover:text-blue-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle theme">
+                 <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 mt-2">
+        <button id="prev-day-btn" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <h2 id="current-date-display" class="text-lg font-semibold whitespace-nowrap"></h2>
+        <button id="next-day-btn" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
+
+    <!-- Quick Navigation Buttons -->
+    <nav class="flex justify-around p-3 bg-white dark:bg-gray-900 shadow-sm rounded-lg mx-2 my-2 z-20 transition-colors">
+        <button id="nav-morning" class="btn-press rounded-md px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-100 ease-out dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-900">Morning</button>
+        <button id="nav-afternoon" class="btn-press rounded-md px-4 py-2 text-sm font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-100 ease-out dark:bg-orange-900/50 dark:text-orange-300 dark:hover:bg-orange-900">Afternoon</button>
+        <button id="nav-evening" class="btn-press rounded-md px-4 py-2 text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-100 ease-out dark:bg-purple-900/50 dark:text-purple-300 dark:hover:bg-purple-900">Evening</button>
+    </nav>
+
+    <!-- Timeline Container -->
+    <main id="timeline-container" class="flex-grow overflow-y-scroll relative bg-white dark:bg-gray-800 mx-2 mb-4 rounded-lg shadow-inner pb-20 transition-colors">
+        <!-- Timeline hours will be dynamically generated here -->
+    </main>
+
+    <!-- Floating Add Button -->
+    <button id="add-task-btn" class="btn-press fixed bottom-8 right-8 bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-4 rounded-full shadow-lg text-2xl z-40 w-16 h-16 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-300 transform active:scale-95 transition-transform duration-100 ease-out">
+        +
+    </button>
+
+    <!-- Task Modal (hidden by default) -->
+    <div id="task-modal" class="fixed inset-0 flex items-end justify-center z-50 hidden modal-overlay">
+        <div class="bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl p-6 w-full max-w-md modal-content transition-colors">
+            <h2 id="modal-title" class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Add New Task</h2>
+            <form id="task-form" class="space-y-4">
+                <div>
+                    <label for="task-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Task Title</label>
+                    <input type="text" id="task-title" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400">
+                </div>
+                 <div class="relative">
+                    <label for="task-start-time-display" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
+                    <input type="text" id="task-start-time-display" readonly required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400 cursor-pointer">
+                    <input type="hidden" id="task-start-time">
+                    <div id="custom-time-picker" class="absolute left-0 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg z-10 hidden h-48 overflow-y-scroll mb-1">
+                        <!-- Time slots will be generated here -->
+                    </div>
+                </div>
+                <div>
+                    <label for="task-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Duration (minutes)</label>
+                    <input type="number" id="task-duration" required min="30" step="30" value="60" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400">
+                </div>
+                <div>
+                    <label for="task-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                    <select id="task-priority" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <option value="low">Low Priority</option>
+                        <option value="medium">Medium Priority</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="task-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes (Optional)</label>
+                    <textarea id="task-notes" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-task-btn" class="btn-press px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-transform duration-100 ease-out dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">Cancel</button>
+                    <button type="submit" class="btn-press px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-transform duration-100 ease-out dark:bg-blue-500 dark:hover:bg-blue-600">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="message-box" class="hidden"></div>
+
+
+    <script>
+        const timelineContainer = document.getElementById('timeline-container');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskModal = document.getElementById('task-modal');
+        const taskForm = document.getElementById('task-form');
+        const modalTitle = document.getElementById('modal-title');
+        const cancelTaskBtn = document.getElementById('cancel-task-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const messageBox = document.getElementById('message-box');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const prevDayBtn = document.getElementById('prev-day-btn');
+        const nextDayBtn = document.getElementById('next-day-btn');
+        const currentDateDisplay = document.getElementById('current-date-display');
+
+
+        const taskTitleInput = document.getElementById('task-title');
+        const taskStartTimeInput = document.getElementById('task-start-time');
+        const taskDurationInput = document.getElementById('task-duration');
+        const taskPrioritySelect = document.getElementById('task-priority');
+        const taskNotesInput = document.getElementById('task-notes');
+
+        const progressCircle = document.querySelector('.progress-ring__circle');
+        const progressText = document.getElementById('progress-text');
+        const radius = progressCircle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+
+        const navMorningBtn = document.getElementById('nav-morning');
+        const navAfternoonBtn = document.getElementById('nav-afternoon');
+        const navEveningBtn = document.getElementById('nav-evening');
+
+        // --- Dark Mode ---
+        const lightIcon = document.getElementById('theme-icon-light');
+        const darkIcon = document.getElementById('theme-icon-dark');
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+
+
+        // Global state for tasks
+        let currentDate = new Date();
+        let tasks = [];
+        // Tracks the task being edited
+        let editingTaskId = null;
+        let placeholderElement = null;
+        let isSwipeAction = false;
+
+        // Constants
+        const MINUTES_PER_HOUR = 60;
+        const SLOT_HEIGHT_PX = 60; // 30-minute slot is 60px
+        const TOTAL_MINUTES_IN_DAY = 24 * MINUTES_PER_HOUR; // 1440 minutes
+        const PIXELS_PER_MINUTE = SLOT_HEIGHT_PX / 30; // 2px per minute
+
+        // Dragging state variables
+        let isDragging = false;
+        let activeTaskCard = null;
+        let initialY = 0; // Initial Y position of touch
+        let initialX = 0; // Initial X position of touch
+        let initialCardTop = 0; // Initial top style of the card
+
+        // Swiping state variables
+        let swipeStartX = 0;
+        let swipeStartY = 0;
+        let swipeStartTime = 0;
+        const SWIPE_THRESHOLD_X = 30; // Pixels for horizontal swipe to be registered (reduced)
+        const SWIPE_THRESHOLD_Y = 30; // Pixels for vertical swipe to be registered (reduced)
+        const SWIPE_VELOCITY_THRESHOLD = 0.15; // Pixels per ms (reduced)
+
+        // --- Utility Functions ---
+
+        // Converts minutes from midnight (0-1440) to HH:MM AM/PM format
+        function formatMinutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+            const displayMins = mins < 10 ? '0' + mins : mins;
+            return `${displayHours}:${displayMins} ${ampm}`;
+        }
+
+        // Converts minutes from midnight to HH:MM format for input type="time"
+        function formatMinutesToInputTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const displayHours = hours < 10 ? '0' + hours : hours;
+            const displayMins = mins < 10 ? '0' + mins : mins;
+            return `${displayHours}:${displayMins}`;
+        }
+
+        // Converts HH:MM string from input type="time" to minutes from midnight
+        function parseInputTimeToMinutes(timeString) {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // Converts duration in minutes to pixels
+        function durationToPixels(durationMinutes) {
+            return durationMinutes * PIXELS_PER_MINUTE;
+        }
+
+        // Converts pixels to minutes
+        function pixelsToMinutes(pixels) {
+            return Math.round(pixels / PIXELS_PER_MINUTE);
+        }
+
+        // Rounds minutes to the nearest 30-minute interval
+        function roundToNearestHalfHour(minutes) {
+            return Math.round(minutes / 30) * 30;
+        }
+
+        // Generates a unique ID
+        function generateUniqueId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Display a temporary message to the user
+        function showMessage(message, duration = 3000) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+                setTimeout(() => messageBox.classList.add('hidden'), 300); // Allow fade out
+            }, duration);
+        }
+
+        // --- Local Storage Management ---
+
+        function getTasksKey(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `dailyTasks-${year}-${month}-${day}`;
+        }
+
+        function saveTasks() {
+            try {
+                const tasksKey = getTasksKey(currentDate);
+                localStorage.setItem(tasksKey, JSON.stringify(tasks));
+                updateProgressCircle();
+            } catch (e) {
+                console.error("Error saving tasks to localStorage:", e);
+                showMessage("Error saving tasks!");
+            }
+        }
+
+        async function loadTasksForDate() {
+            loadingOverlay.classList.remove('hidden');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Shorter delay
+
+            try {
+                const tasksKey = getTasksKey(currentDate);
+                const storedTasks = localStorage.getItem(tasksKey);
+                if (storedTasks) {
+                    const parsedTasks = JSON.parse(storedTasks);
+                    if (Array.isArray(parsedTasks) && parsedTasks.every(task =>
+                        typeof task.id === 'string' &&
+                        typeof task.title === 'string' &&
+                        typeof task.duration === 'number' &&
+                        typeof task.priority === 'string' &&
+                        typeof task.startTime === 'number' &&
+                        typeof task.completed === 'boolean'
+                    )) {
+                        tasks = parsedTasks;
+                    } else {
+                        console.warn("Corrupted or invalid task data in localStorage. Resetting tasks for this date.");
+                        showMessage("Corrupted task data found, resetting.");
+                        tasks = [];
+                    }
+                } else {
+                    tasks = []; // No tasks for this day
+                }
+            } catch (e) {
+                console.error("Error loading tasks from localStorage:", e);
+                showMessage("Failed to load tasks, resetting.");
+                tasks = []; // Reset tasks if data is corrupted
+            } finally {
+                loadingOverlay.classList.add('hidden');
+                renderTasks();
+                updateProgressCircle();
+            }
+        }
+
+        // --- Tooltip/Help Functionality ---
+        const tooltips = [
+            { selector: '#add-task-btn', text: 'Click here to add a new task.', position: 'up' },
+            { selector: '#progress-indicator', text: 'This circle shows your task completion progress.', position: 'down' },
+            { selector: '.task-card', text: 'Drag to reschedule, swipe left to delete, or tap to see details.', position: 'up' },
+            { selector: '#nav-morning', text: 'Use these buttons to quickly jump to different times of the day.', position: 'down' }
+        ];
+
+        function clearTooltips() {
+            document.querySelectorAll('.tooltip').forEach(tip => tip.remove());
+            const overlay = document.getElementById('tooltip-overlay');
+            if(overlay) overlay.remove();
+        }
+
+        function showTooltips() {
+            clearTooltips();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'tooltip-overlay';
+            overlay.addEventListener('click', clearTooltips);
+            document.body.appendChild(overlay);
+
+            tooltips.forEach(tooltipData => {
+                const targetElement = document.querySelector(tooltipData.selector);
+                if (!targetElement) return;
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = tooltipData.text;
+
+                const arrow = document.createElement('div');
+                const arrowDirectionClass = tooltipData.position === 'up' ? 'down' : 'up';
+                arrow.className = `tooltip-arrow ${arrowDirectionClass}`;
+                tooltip.appendChild(arrow);
+
+                const isInsideTimeline = timelineContainer.contains(targetElement);
+                const parentElement = isInsideTimeline ? timelineContainer : document.body;
+                parentElement.appendChild(tooltip);
+
+                // We must append and get rects *after* adding content to get correct dimensions
+                const tooltipRect = tooltip.getBoundingClientRect();
+
+                let top, left;
+
+                if (isInsideTimeline) {
+                    // Position relative to the timeline container
+                    if (tooltipData.position === 'up') {
+                        top = targetElement.offsetTop - tooltipRect.height - 10;
+                    } else { // down
+                        top = targetElement.offsetTop + targetElement.offsetHeight + 10;
+                    }
+                    left = targetElement.offsetLeft + (targetElement.offsetWidth / 2) - (tooltipRect.width / 2);
+
+                    // Clamp left position to stay within parent
+                    left = Math.max(0, Math.min(left, parentElement.clientWidth - tooltipRect.width));
+                } else {
+                    // Position relative to the viewport (as body doesn't scroll)
+                    const targetRect = targetElement.getBoundingClientRect();
+                    if (tooltipData.position === 'up') {
+                        top = targetRect.top - tooltipRect.height - 10;
+                    } else { // down
+                        top = targetRect.bottom + 10;
+                    }
+                    left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+
+                    // Clamp left position to stay within viewport
+                    left = Math.max(5, Math.min(left, window.innerWidth - tooltipRect.width - 5));
+                }
+
+                tooltip.style.top = `${top}px`;
+                tooltip.style.left = `${left}px`;
+
+                setTimeout(() => tooltip.classList.add('show'), 50);
+            });
+        }
+
+        helpBtn.addEventListener('click', showTooltips);
+
+
+        // --- UI Rendering ---
+
+        function updateDateDisplay() {
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            currentDateDisplay.textContent = currentDate.toLocaleDateString('en-US', options);
+        }
+
+        function renderTimeline() {
+            timelineContainer.innerHTML = ''; // Clear existing timeline
+            for (let i = 0; i < 24; i++) {
+                const hourDiv = document.createElement('div');
+                hourDiv.classList.add('hour-marker', 'relative', 'border-gray-200', 'flex', 'flex-col', 'justify-start');
+                hourDiv.setAttribute('data-time', i === 0 ? "12:00 AM" : formatMinutesToTime(i * 60));
+
+                const firstHalfHourSlot = document.createElement('div');
+                firstHalfHourSlot.classList.add('half-hour-line', 'flex-shrink-0', 'flex-grow-0', 'w-full', 'relative');
+                firstHalfHourSlot.setAttribute('data-minutes', i * 60);
+                firstHalfHourSlot.addEventListener('click', handleTimelineSlotClick);
+                hourDiv.appendChild(firstHalfHourSlot);
+
+                const secondHalfHourSlot = document.createElement('div');
+                secondHalfHourSlot.classList.add('half-hour-line', 'flex-shrink-0', 'flex-grow-0', 'w-full', 'relative');
+                secondHalfHourSlot.setAttribute('data-minutes', i * 60 + 30);
+                secondHalfHourSlot.addEventListener('click', handleTimelineSlotClick);
+                hourDiv.appendChild(secondHalfHourSlot);
+
+                timelineContainer.appendChild(hourDiv);
+            }
+        }
+
+        function renderTasks() {
+            // Remove existing task cards before re-rendering
+            document.querySelectorAll('.task-card').forEach(card => card.remove());
+
+            tasks.forEach((task, index) => {
+                const taskCard = document.createElement('div');
+                taskCard.id = `task-${task.id}`;
+                taskCard.classList.add(
+                    'task-card',
+                    'bg-white',
+                    'dark:bg-gray-900',
+                    'rounded-lg',
+                    'shadow',
+                    'p-3',
+                    'mb-1',
+                    'flex',
+                    'flex-col',
+                    'justify-between',
+                    'transition',
+                    'ease-out',
+                    'duration-200',
+                    `priority-${task.priority}`,
+                    'appear-animation' // Add initial animation class
+                );
+                // Apply staggered animation delay
+                taskCard.style.animationDelay = `${index * 0.05}s`;
+
+                // Set initial position based on startTime and duration
+                taskCard.style.top = `${task.startTime * PIXELS_PER_MINUTE}px`;
+                taskCard.style.height = `${durationToPixels(task.duration)}px`;
+
+                if (task.completed) {
+                    taskCard.classList.add('completed');
+                }
+
+                const trashIcon = `<span class="swipe-delete-icon absolute left-0 right-0 top-1/2 -translate-y-1/2 flex items-center justify-center text-white text-4xl">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 18a1 1 0 01-1-1v-6a1 1 0 112 0v6a1 1 0 01-1 1zM14 18a1 1 0 01-1-1v-6a1 1 0 112 0v6a1 1 0 01-1 1zM17 7h-4V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2H3a1 1 0 000 2h1v10a2 2 0 002 2h12a2 2 0 002-2V9h1a1 1 0 000-2zM9 5h6v2H9V5zm8 4H7v10h10V9z"/>
+                    </svg>
+                </span>`;
+
+                const completeIcon = task.completed
+                    ? `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` // Undo Icon
+                    : `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`; // Checkmark Icon
+
+                taskCard.innerHTML = `
+                    <div class="task-content">
+                        <div class="flex items-start justify-between mb-1">
+                            <div class="flex-grow min-w-0">
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-100 text-base truncate pr-2">${task.title}</h3>
+                                <span class="text-sm text-gray-600 dark:text-gray-300 flex-shrink-0">${formatMinutesToTime(task.startTime)} - ${formatMinutesToTime(task.startTime + task.duration)}</span>
+                            </div>
+                            <button class="complete-task-btn p-2 rounded-full flex-shrink-0 flex items-center justify-center transition-colors duration-200 ${task.completed ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'}">
+                                ${completeIcon}
+                            </button>
+                        </div>
+
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Duration: ${task.duration} mins</p>
+
+                        <div class="task-notes-container mt-2">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${task.notes || 'No notes.'}</p>
+                            <div class="flex justify-end mt-2">
+                                <button class="edit-task-btn text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">Edit</button>
+                            </div>
+                        </div>
+
+                        <div class="absolute bottom-1 right-1">
+                            <button class="toggle-notes-btn text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-8 h-8 rounded-full flex items-center justify-center">
+                                <svg class="toggle-notes-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    ${trashIcon}
+                `;
+
+                // Add event listeners for dragging/swiping
+                taskCard.addEventListener('touchstart', handleDragStart, { passive: false });
+                taskCard.addEventListener('mousedown', handleDragStart);
+                taskCard.addEventListener('click', (e) => {
+                    // Prevent click from firing if it was part of a drag/swipe
+                    if (isDragging || taskCard.classList.contains('swiping-delete')) {
+                        return;
+                    }
+                    toggleTaskDetails(taskCard, task.id);
+                });
+
+                // Attach event listener for the complete button
+                const completeBtn = taskCard.querySelector('.complete-task-btn');
+                if (completeBtn) {
+                    completeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        markTaskComplete(task.id);
+                    });
+                }
+
+                // Attach event listener for the edit button
+                const editBtn = taskCard.querySelector('.edit-task-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const taskId = taskCard.id.replace('task-', '');
+                        const taskToEdit = tasks.find(t => t.id === taskId);
+                        if (taskToEdit) {
+                            showModal(taskToEdit);
+                        }
+                    });
+                }
+
+                timelineContainer.appendChild(taskCard);
+            });
+            updateProgressCircle();
+        }
+
+        function toggleTaskDetails(taskCard, taskId) {
+            const isCurrentlyExpanded = taskCard.classList.contains('expanded');
+
+            // First, collapse any other card that might be open
+            document.querySelectorAll('.task-card.expanded').forEach(otherCard => {
+                if (otherCard !== taskCard) {
+                    otherCard.classList.remove('expanded');
+                    const otherTaskId = otherCard.id.replace('task-', '');
+                    const otherTask = tasks.find(t => t.id === otherTaskId);
+                    if (otherTask) {
+                        otherCard.style.height = `${durationToPixels(otherTask.duration)}px`;
+                    }
+                    otherCard.style.zIndex = 10;
+                }
+            });
+
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (isCurrentlyExpanded) {
+                // Collapse the clicked card
+                taskCard.classList.remove('expanded');
+                taskCard.style.height = `${durationToPixels(task.duration)}px`;
+                taskCard.style.zIndex = 10;
+            } else {
+                // Expand the clicked card
+                taskCard.classList.add('expanded');
+                taskCard.style.height = 'auto';
+                taskCard.style.zIndex = 25;
+            }
+        }
+
+        function updateProgressCircle() {
+            const completedTasks = tasks.filter(t => t.completed).length;
+            const totalTasks = tasks.length;
+            const tooltip = document.getElementById('progress-tooltip');
+
+            progressCircle.classList.remove('stroke-green-500', 'dark:stroke-green-400', 'stroke-blue-500', 'dark:stroke-blue-400');
+
+            if (totalTasks === 0) {
+                progressCircle.classList.add('stroke-blue-500', 'dark:stroke-blue-400');
+                progressCircle.style.strokeDashoffset = circumference;
+                progressText.innerHTML = `<svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
+                tooltip.textContent = "No tasks today";
+            } else {
+                progressCircle.classList.add('stroke-green-500', 'dark:stroke-green-400');
+                const percentage = Math.round((completedTasks / totalTasks) * 100);
+                const offset = circumference - (percentage / 100) * circumference;
+                progressCircle.style.strokeDashoffset = offset;
+                progressText.textContent = `${percentage}%`;
+                tooltip.innerHTML = `You have ${totalTasks} tasks today <br> and ${completedTasks} is completed.`;
+            }
+        }
+
+        // --- Task Operations ---
+
+        function addTask(taskDetails) {
+            // Check for collision before adding
+            const newEndTime = taskDetails.startTime + taskDetails.duration;
+            let overlaps = false;
+            for (const existingTask of tasks) {
+                if (
+                    (taskDetails.startTime < (existingTask.startTime + existingTask.duration) && newEndTime > existingTask.startTime)
+                ) {
+                    overlaps = true;
+                    break;
+                }
+            }
+
+            if (overlaps) {
+                showMessage("Task overlaps with an existing task!");
+                return;
+            }
+
+            const newTask = {
+                id: generateUniqueId(),
+                timestamp: Date.now(),
+                completed: false,
+                ...taskDetails
+            };
+            tasks.push(newTask);
+            saveTasks();
+            renderTasks(); // Re-render all tasks to ensure correct positioning and collision
+            showMessage("Task added successfully!");
+        }
+
+        function updateTask(id, updates) {
+            const taskIndex = tasks.findIndex(task => task.id === id);
+            if (taskIndex > -1) {
+                // Check for collision before updating start time/duration
+                const updatedTask = { ...tasks[taskIndex], ...updates };
+                const newEndTime = updatedTask.startTime + updatedTask.duration;
+                let overlaps = false;
+                for (const existingTask of tasks) {
+                    if (existingTask.id === id) continue; // Don't compare with self
+
+                    if (
+                        (updatedTask.startTime < (existingTask.startTime + existingTask.duration) && newEndTime > existingTask.startTime)
+                    ) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+
+                if (overlaps) {
+                    showMessage("Task update would cause an overlap!");
+                    // Revert visual transform if it was a drag operation
+                    if (activeTaskCard) activeTaskCard.style.transform = '';
+                    return false; // Indicate failure
+                }
+
+                tasks[taskIndex] = updatedTask;
+                saveTasks();
+                renderTasks(); // Re-render all tasks to ensure correct positioning
+                showMessage("Task updated successfully!");
+                return true; // Indicate success
+            }
+            return false;
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+            const taskCard = document.getElementById(`task-${id}`);
+            if (taskCard) {
+                // Apply fade out animation before removal
+                taskCard.style.opacity = '0';
+                taskCard.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    taskCard.remove();
+                    updateProgressCircle();
+                    showMessage("Task deleted!");
+                }, 300); // Match fade-out transition duration
+            }
+        }
+
+        function markTaskComplete(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed; // Toggle completion status
+                saveTasks();
+                renderTasks(); // Re-render to apply 'completed' class and checkmark
+                showMessage(task.completed ? "Task completed!" : "Task uncompleted!");
+            }
+        }
+
+        // --- Drag & Drop Functionality ---
+
+        function handleDragStart(e) {
+            // Prevent text selection and other default mouse actions, but not for touch
+            if (e.type === 'mousedown') {
+                e.preventDefault();
+            }
+
+            if (e.touches && e.touches.length > 1) return; // Ignore multi-touch
+            
+            activeTaskCard = this; // 'this' refers to the taskCard element
+            
+            const pointer = e.touches ? e.touches[0] : e;
+            initialY = pointer.clientY;
+            initialX = pointer.clientX;
+            swipeStartX = pointer.clientX;
+            swipeStartY = pointer.clientY;
+            swipeStartTime = Date.now();
+
+            initialCardTop = parseFloat(activeTaskCard.style.top) || 0;
+            
+            activeTaskCard.classList.add('dragging');
+
+            if (e.type === 'touchstart') {
+                document.addEventListener('touchmove', handleDragMove, { passive: false });
+                document.addEventListener('touchend', handleDragEnd);
+                document.addEventListener('touchcancel', handleDragEnd);
+            } else { // mousedown
+                document.addEventListener('mousemove', handleDragMove);
+                document.addEventListener('mouseup', handleDragEnd);
+            }
+            
+            isDragging = false;
+            isSwipeAction = false;
+        }
+
+        function handleDragMove(e) {
+            if (!activeTaskCard) return;
+            e.preventDefault(); // Prevent scrolling while dragging
+
+            const pointer = e.touches ? e.touches[0] : e;
+            const currentY = pointer.clientY;
+            const currentX = pointer.clientX;
+
+            const deltaY = currentY - initialY;
+            const deltaX = currentX - initialX;
+
+            // Determine if it's a swipe or drag action on the first significant move
+            if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+                isDragging = true;
+                // Check if horizontal movement is dominant
+                if (Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+                    isSwipeAction = true;
+                    activeTaskCard.classList.add('swipe-ready');
+                    // Prevent placeholder from appearing for swipe
+                    if (placeholderElement) {
+                        placeholderElement.remove();
+                        placeholderElement = null;
+                    }
+                } else {
+                    isSwipeAction = false;
+                    // Create placeholder for vertical drag
+                    if (!placeholderElement) {
+                        placeholderElement = document.createElement('div');
+                        placeholderElement.classList.add('task-placeholder');
+                        placeholderElement.style.height = `${activeTaskCard.offsetHeight}px`;
+                        placeholderElement.style.top = activeTaskCard.style.top;
+                        timelineContainer.appendChild(placeholderElement);
+                    }
+                }
+            }
+
+            if (isDragging) {
+                if (isSwipeAction) {
+                    // SWIPE ACTION - Enhanced interactivity
+                    const maxSwipe = activeTaskCard.offsetWidth * 0.8;
+                    const clampedDeltaX = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX));
+                    
+                    activeTaskCard.style.transform = `translateX(${clampedDeltaX}px)`;
+                    
+                    // Progressive background color change
+                    const swipeProgress = Math.abs(clampedDeltaX) / (activeTaskCard.offsetWidth * 0.3);
+                    const opacity = Math.min(0.8, swipeProgress * 0.8);
+                    
+                    if (Math.abs(clampedDeltaX) > 20) {
+                        activeTaskCard.classList.add('swiping-delete');
+                        activeTaskCard.style.backgroundColor = `rgba(239, 68, 68, ${opacity * 0.3})`;
+                        
+                        // Show trash icon with progressive opacity
+                        const trashIcon = activeTaskCard.querySelector('.swipe-delete-icon');
+                        if (trashIcon) {
+                            trashIcon.style.opacity = Math.min(1, swipeProgress);
+                        }
+                    } else {
+                        activeTaskCard.classList.remove('swiping-delete');
+                        activeTaskCard.style.backgroundColor = '';
+                        
+                        const trashIcon = activeTaskCard.querySelector('.swipe-delete-icon');
+                        if (trashIcon) {
+                            trashIcon.style.opacity = '0';
+                        }
+                    }
+                } else {
+                    // DRAG ACTION
+                    activeTaskCard.style.setProperty('--drag-x', '0px'); // Lock horizontal movement
+                    activeTaskCard.style.setProperty('--drag-y', `${deltaY}px`);
+                    activeTaskCard.classList.remove('swiping-delete');
+
+                    // Placeholder logic for vertical drag
+                    if (placeholderElement) {
+                        const newTop = initialCardTop + deltaY;
+                        const snappedMinutes = roundToNearestHalfHour(pixelsToMinutes(newTop));
+                        const snappedTop = snappedMinutes * PIXELS_PER_MINUTE;
+                        placeholderElement.style.top = `${snappedTop}px`;
+                        
+                        // --- Collision detection for placeholder ---
+                        const taskId = activeTaskCard.id.replace('task-', '');
+                        const task = tasks.find(t => t.id === taskId);
+                        const newEndTime = snappedMinutes + task.duration;
+                        let overlaps = false;
+                        for (const existingTask of tasks) {
+                            if (existingTask.id === taskId) continue;
+                            if ((snappedMinutes < (existingTask.startTime + existingTask.duration) && newEndTime > existingTask.startTime)) {
+                                overlaps = true;
+                                break;
+                            }
+                        }
+                        if (overlaps) {
+                            placeholderElement.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; // light red
+                            placeholderElement.style.borderColor = '#ef4444'; // red-500
+                        } else {
+                            placeholderElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                            placeholderElement.style.borderColor = 'var(--primary-color)';
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleDragEnd(e) {
+            if (!activeTaskCard) return;
+
+            const pointer = e.changedTouches ? e.changedTouches[0] : e;
+            const finalX = pointer.clientX;
+            const deltaX = finalX - swipeStartX;
+            const deleteThreshold = activeTaskCard.offsetWidth * 0.3; // Lower threshold for better UX
+
+            if (isSwipeAction) {
+                activeTaskCard.classList.remove('swipe-ready');
+                activeTaskCard.classList.add('swipe-animating');
+                
+                if (Math.abs(deltaX) > deleteThreshold) {
+                    const taskId = activeTaskCard.id.replace('task-', '');
+                    
+                    // Animate card off-screen before deleting
+                    const direction = deltaX > 0 ? '100%' : '-100%';
+                    activeTaskCard.style.transform = `translateX(${direction})`;
+                    activeTaskCard.style.opacity = '0';
+                    activeTaskCard.style.backgroundColor = 'rgba(239, 68, 68, 0.8)';
+
+                    setTimeout(() => deleteTask(taskId), 300);
+
+                    // Cleanup immediately after initiating animation
+                    if (e.type === 'touchend' || e.type === 'touchcancel') {
+                        document.removeEventListener('touchmove', handleDragMove);
+                        document.removeEventListener('touchend', handleDragEnd);
+                        document.removeEventListener('touchcancel', handleDragEnd);
+                    } else { // mouseup
+                        document.removeEventListener('mousemove', handleDragMove);
+                        document.removeEventListener('mouseup', handleDragEnd);
+                    }
+                    activeTaskCard = null;
+                    isDragging = false;
+                    isSwipeAction = false;
+                    return;
+                } else {
+                    // Snap back with elastic animation
+                    activeTaskCard.style.transform = 'translateX(0)';
+                    activeTaskCard.style.backgroundColor = '';
+                    
+                    // Hide trash icon
+                    const trashIcon = activeTaskCard.querySelector('.swipe-delete-icon');
+                    if (trashIcon) {
+                        trashIcon.style.opacity = '0';
+                    }
+                    
+                    setTimeout(() => {
+                        if (activeTaskCard) {
+                            activeTaskCard.classList.remove('swipe-animating', 'swiping-delete');
+                        }
+                    }, 300);
+                }
+            }
+
+            if (placeholderElement) {
+                placeholderElement.remove();
+                placeholderElement = null;
+            }
+
+            activeTaskCard.classList.remove('dragging');
+            activeTaskCard.classList.remove('swiping-delete'); // Ensure red background is removed
+            activeTaskCard.style.setProperty('--drag-x', '0px'); // Reset transform
+            activeTaskCard.style.setProperty('--drag-y', '0px'); // Reset transform
+
+            if (e.type === 'touchend' || e.type === 'touchcancel') {
+                 document.removeEventListener('touchmove', handleDragMove);
+                 document.removeEventListener('touchend', handleDragEnd);
+                 document.removeEventListener('touchcancel', handleDragEnd);
+            } else { // mouseup
+                 document.removeEventListener('mousemove', handleDragMove);
+                 document.removeEventListener('mouseup', handleDragEnd);
+            }
+
+            const finalY = pointer.clientY;
+            
+            // --- Drag Snap-to-Grid and Collision Detection ---
+            if (isDragging && !isSwipeAction) {
+                const finalDeltaY = finalY - initialY;
+                const newTop = initialCardTop + finalDeltaY;
+
+                // Snap to the nearest 30-minute interval
+                let snappedMinutes = roundToNearestHalfHour(pixelsToMinutes(newTop));
+
+                const taskId = activeTaskCard.id.replace('task-', '');
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    // Ensure snappedMinutes is within 0 to TOTAL_MINUTES_IN_DAY - task.duration
+                    snappedMinutes = Math.max(0, Math.min(snappedMinutes, TOTAL_MINUTES_IN_DAY - task.duration));
+
+                    // Attempt to update the task, collision detection is handled within updateTask
+                    const success = updateTask(taskId, { startTime: snappedMinutes });
+                    if (!success) {
+                        // If update failed due to collision, revert visual position
+                        activeTaskCard.style.top = `${task.startTime * PIXELS_PER_MINUTE}px`;
+                    }
+                }
+            }
+
+            // Clear transform style and reset state
+            if (!isSwipeAction) {
+                activeTaskCard.style.transform = '';
+            }
+            activeTaskCard = null;
+            isDragging = false;
+            isSwipeAction = false;
+        }
+
+        // --- Modal Control ---
+
+        function showModal(task = null, defaultStartTimeMinutes = null) {
+            taskModal.classList.remove('hidden');
+            const timeDisplayInput = document.getElementById('task-start-time-display');
+            const timeValueInput = document.getElementById('task-start-time');
+
+            if (task) {
+                modalTitle.textContent = 'Edit Task';
+                taskTitleInput.value = task.title;
+                taskDurationInput.value = task.duration;
+                taskPrioritySelect.value = task.priority;
+                taskNotesInput.value = task.notes || '';
+                
+                timeValueInput.value = formatMinutesToInputTime(task.startTime);
+                timeDisplayInput.value = formatMinutesToTime(task.startTime);
+
+                editingTaskId = task.id;
+            } else {
+                modalTitle.textContent = 'Add New Task';
+                taskForm.reset(); // Clear form for new task
+                editingTaskId = null;
+
+                let startTimeMinutes;
+                if (defaultStartTimeMinutes !== null) {
+                    startTimeMinutes = defaultStartTimeMinutes;
+                } else {
+                    const now = new Date();
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    startTimeMinutes = roundToNearestHalfHour(currentMinutes + 30);
+                }
+                timeValueInput.value = formatMinutesToInputTime(startTimeMinutes);
+                timeDisplayInput.value = formatMinutesToTime(startTimeMinutes);
+            }
+        }
+
+        function hideModal() {
+            taskModal.classList.add('hidden');
+        }
+
+        // --- Event Listeners ---
+
+        addTaskBtn.addEventListener('click', () => {
+            showModal();
+            // Optional: Haptic feedback simulation
+            addTaskBtn.classList.add('btn-press');
+            setTimeout(() => addTaskBtn.classList.remove('btn-press'), 150);
+        });
+
+        cancelTaskBtn.addEventListener('click', () => {
+            hideModal();
+            // Optional: Haptic feedback simulation
+            cancelTaskBtn.classList.add('btn-press');
+            setTimeout(() => cancelTaskBtn.classList.remove('btn-press'), 150);
+        });
+
+        taskModal.addEventListener('click', (e) => {
+            // Close modal if clicked outside content
+            if (e.target === taskModal) {
+                hideModal();
+            }
+        });
+
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const title = taskTitleInput.value.trim();
+            const startTime = parseInputTimeToMinutes(taskStartTimeInput.value);
+            const duration = parseInt(taskDurationInput.value, 10);
+            const priority = taskPrioritySelect.value;
+            const notes = taskNotesInput.value.trim();
+
+            if (!title || isNaN(duration) || duration <= 0) {
+                showMessage('Please enter a valid title and duration.');
+                return;
+            }
+
+            if (isNaN(startTime) || startTime < 0 || startTime >= TOTAL_MINUTES_IN_DAY) {
+                showMessage('Please select a valid start time.');
+                return;
+            }
+
+            const taskDetails = { title, startTime, duration, priority, notes };
+
+            if (editingTaskId) {
+                updateTask(editingTaskId, { ...taskDetails });
+            } else {
+                addTask({ ...taskDetails });
+            }
+
+            hideModal();
+        });
+
+        // Click handler for timeline slots
+        function handleTimelineSlotClick(e) {
+            const minutes = parseInt(this.getAttribute('data-minutes'), 10);
+            showModal(null, minutes); // Pass default start time
+        }
+
+        navMorningBtn.addEventListener('click', () => {
+            const targetScrollPosition = 6 * MINUTES_PER_HOUR * PIXELS_PER_MINUTE; // 6 AM
+            timelineContainer.scrollTop = targetScrollPosition;
+        });
+
+        navAfternoonBtn.addEventListener('click', () => {
+            const targetScrollPosition = 12 * MINUTES_PER_HOUR * PIXELS_PER_MINUTE; // 12 PM
+            timelineContainer.scrollTop = targetScrollPosition;
+        });
+
+        navEveningBtn.addEventListener('click', () => {
+            const targetScrollPosition = 18 * MINUTES_PER_HOUR * PIXELS_PER_MINUTE; // 6 PM
+            timelineContainer.scrollTop = targetScrollPosition;
+        });
+
+        prevDayBtn.addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 1);
+            updateDateDisplay();
+            loadTasksForDate();
+        });
+
+        nextDayBtn.addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 1);
+            updateDateDisplay();
+            loadTasksForDate();
+        });
+
+        // --- Custom Time Picker Logic ---
+        function generateTimeSlots() {
+            const picker = document.getElementById('custom-time-picker');
+            picker.innerHTML = '';
+            for (let i = 0; i < TOTAL_MINUTES_IN_DAY; i += 30) {
+                const timeSlot = document.createElement('div');
+                const displayTime = formatMinutesToTime(i);
+                const valueTime = formatMinutesToInputTime(i);
+                
+                timeSlot.textContent = displayTime;
+                timeSlot.dataset.value = valueTime;
+                timeSlot.classList.add('p-2', 'cursor-pointer', 'time-slot', 'text-gray-700', 'dark:text-gray-200');
+
+                timeSlot.addEventListener('click', () => {
+                    const displayInput = document.getElementById('task-start-time-display');
+                    const valueInput = document.getElementById('task-start-time');
+                    displayInput.value = displayTime;
+                    valueInput.value = valueTime;
+                    picker.classList.add('hidden');
+                });
+                picker.appendChild(timeSlot);
+            }
+        }
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Apply saved theme on initial load
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+            updateDateDisplay();
+            renderTimeline();
+            await loadTasksForDate();
+
+            // Scroll to current time on load only if viewing today
+            const today = new Date();
+            if (currentDate.getFullYear() === today.getFullYear() &&
+                currentDate.getMonth() === today.getMonth() &&
+                currentDate.getDate() === today.getDate())
+            {
+                const now = new Date();
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                const currentScrollPosition = currentMinutes * PIXELS_PER_MINUTE - (timelineContainer.offsetHeight / 2) + (SLOT_HEIGHT_PX / 2); // Center current time in its slot
+                timelineContainer.scrollTop = Math.max(0, currentScrollPosition);
+            } else {
+                // Scroll to morning for other days
+                timelineContainer.scrollTop = 6 * MINUTES_PER_HOUR * PIXELS_PER_MINUTE; // 6 AM
+            }
+
+            generateTimeSlots();
+
+            const timeDisplayInput = document.getElementById('task-start-time-display');
+            const timePicker = document.getElementById('custom-time-picker');
+
+            timeDisplayInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+                timePicker.classList.toggle('hidden');
+                // Scroll to selected time
+                const selectedValue = document.getElementById('task-start-time').value;
+                if (selectedValue) {
+                    const selectedSlot = timePicker.querySelector(`[data-value="${selectedValue}"]`);
+                    if (selectedSlot) {
+                        selectedSlot.scrollIntoView({ block: 'center' });
+                    }
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!timePicker.classList.contains('hidden') && !timePicker.contains(e.target) && e.target !== timeDisplayInput) {
+                    timePicker.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

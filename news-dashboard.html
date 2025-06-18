@@ -1,0 +1,4225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Dashboard</title>
+    <style>
+        :root {
+            --primary-hue: 220deg;
+            --primary: hsl(var(--primary-hue), 65%, 60%);
+            --secondary: #f39c12;
+            --accent: #e74c3c;
+            --background: linear-gradient(135deg, hsl(var(--primary-hue), 55%, 65%) 0%, hsl(calc(var(--primary-hue) + 30deg), 50%, 60%) 100%);
+            --hero-gradient: linear-gradient(135deg, hsla(var(--primary-hue), 45%, 55%, 0.9) 0%, hsla(calc(var(--primary-hue) + 30deg), 40%, 50%, 0.9) 100%);
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --glass-bg: hsla(var(--primary-hue), 60%, 95%, 0.1);
+            --mood-transition-duration: 2s;
+            
+            /* Dark mode variables */
+            --dark-primary: hsl(var(--primary-hue), 50%, 40%);
+            --dark-background: linear-gradient(135deg, hsl(var(--primary-hue), 30%, 15%) 0%, hsl(calc(var(--primary-hue) + 30deg), 25%, 10%) 100%);
+            --dark-hero-gradient: linear-gradient(135deg, hsla(var(--primary-hue), 35%, 25%, 0.9) 0%, hsla(calc(var(--primary-hue) + 30deg), 30%, 20%, 0.9) 100%);
+            --dark-text-primary: #ecf0f1;
+            --dark-text-secondary: #bdc3c7;
+            --dark-glass-bg: hsla(var(--primary-hue), 30%, 5%, 0.3);
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            --primary: var(--dark-primary);
+            --background: var(--dark-background);
+            --hero-gradient: var(--dark-hero-gradient);
+            --text-primary: var(--dark-text-primary);
+            --text-secondary: var(--dark-text-secondary);
+            --glass-bg: var(--dark-glass-bg);
+        }
+
+        body.dark-mode .article-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .article-card::before {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        body.dark-mode .article-full-content {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode .filter-chip {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        body.dark-mode .search-bar {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Enhanced Glassmorphism */
+        .glass-element {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        body.dark-mode .glass-element {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Infinite Scroll Loading Indicator */
+        .scroll-loading-indicator {
+            position: fixed;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .scroll-loading-indicator.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .newspaper-spinner {
+            width: 24px;
+            height: 24px;
+            font-size: 24px;
+            animation: paperSpin 2s linear infinite;
+        }
+
+        .loading-text {
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            animation: loadingPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes paperSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Time Machine Interface */
+        .time-machine-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .time-machine-container.collapsed {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .time-machine-container.collapsed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .time-machine-container.collapsed:hover .time-machine-icon {
+            animation: clockTick 0.5s ease-in-out;
+        }
+
+        @keyframes clockTick {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-50%, -50%) rotate(-10deg); }
+            75% { transform: translate(-50%, -50%) rotate(10deg); }
+        }
+
+        .time-machine-container.expanded {
+            width: 450px;
+            padding: 20px 30px;
+            border-radius: 25px;
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            transform: translateX(-390px);
+            z-index: 1001;
+        }
+
+        .time-machine-icon {
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .time-machine-container.collapsed .time-machine-icon {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .time-machine-container.expanded .time-machine-icon {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .time-machine-content {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.4s ease 0.1s;
+            pointer-events: none;
+            position: relative;
+            z-index: 5;
+        }
+
+        .time-machine-container.expanded .time-machine-content {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .time-machine-title {
+            text-align: center;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .timeline-container {
+            position: relative;
+            width: 400px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-slider {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, 
+                #8B4513 0%, 
+                #CD853F 25%, 
+                #4a90e2 75%, 
+                #00ffff 100%);
+            border-radius: 3px;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .timeline-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .timeline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 8px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Time Period Aesthetics */
+        body.time-vintage {
+            filter: sepia(1) brightness(0.9) contrast(1.2);
+            animation: vintageTransition 1s ease-out;
+        }
+
+        body.time-retro {
+            filter: sepia(0.3) hue-rotate(20deg) brightness(1.1);
+            animation: retroTransition 1s ease-out;
+        }
+
+        body.time-modern {
+            filter: none;
+            animation: modernTransition 1s ease-out;
+        }
+
+        body.time-futuristic {
+            filter: brightness(1.1) contrast(1.3) hue-rotate(180deg);
+            animation: futuristicTransition 1s ease-out;
+        }
+
+        body.time-futuristic .article-title,
+        body.time-futuristic .hero-title,
+        body.time-futuristic .trending-title {
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+            color: #00ffff;
+        }
+
+        body.time-futuristic .filter-chip.active,
+        body.time-futuristic .search-bar:focus {
+            box-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff;
+            border-color: #00ffff;
+        }
+
+        body.time-vintage .article-card,
+        body.time-vintage .weather-widget,
+        body.time-vintage .activity-item {
+            background: rgba(139, 69, 19, 0.2);
+            border-color: rgba(205, 133, 63, 0.4);
+        }
+
+        @keyframes vintageTransition {
+            0% { filter: none; }
+            100% { filter: sepia(1) brightness(0.9) contrast(1.2); }
+        }
+
+        @keyframes retroTransition {
+            0% { filter: none; }
+            100% { filter: sepia(0.3) hue-rotate(20deg) brightness(1.1); }
+        }
+
+        @keyframes modernTransition {
+            0% { filter: sepia(0.3) hue-rotate(20deg) brightness(1.1); }
+            100% { filter: none; }
+        }
+
+        @keyframes futuristicTransition {
+            0% { filter: none; }
+            100% { filter: brightness(1.1) contrast(1.3) hue-rotate(180deg); }
+        }
+
+        /* Time Travel Animation */
+        @keyframes timeWarp {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.8) rotate(0deg);
+                filter: blur(10px);
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.1) rotate(180deg);
+                filter: blur(2px);
+            }
+            100% { 
+                opacity: 0.8; 
+                transform: scale(1) rotate(360deg);
+                filter: blur(0px);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom Scrollbar Styling - Glassmorphism */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+        }
+
+        /* Dark mode scrollbar adjustments */
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        body.dark-mode ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Time period specific scrollbar styling */
+        body.time-futuristic ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 4px 16px rgba(0, 255, 255, 0.2), 
+                        inset 0 1px 0 rgba(0, 255, 255, 0.3);
+        }
+
+        body.time-futuristic ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.3), 
+                        inset 0 1px 0 rgba(0, 255, 255, 0.4);
+        }
+
+        body.time-vintage ::-webkit-scrollbar-thumb {
+            background: rgba(139, 69, 19, 0.4);
+            border-color: rgba(205, 133, 63, 0.5);
+            box-shadow: 0 4px 16px rgba(139, 69, 19, 0.2), 
+                        inset 0 1px 0 rgba(205, 133, 63, 0.3);
+        }
+
+        body.time-vintage ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 69, 19, 0.5);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.3), 
+                        inset 0 1px 0 rgba(205, 133, 63, 0.4);
+        }
+
+        /* Mood-based color transitions */
+        .mood-transition {
+            transition: all var(--mood-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes moodTransition {
+            0% { filter: hue-rotate(0deg) brightness(1); }
+            50% { filter: hue-rotate(var(--mood-shift, 0deg)) brightness(1.1); }
+            100% { filter: hue-rotate(var(--mood-shift, 0deg)) brightness(1); }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body.mood-transition {
+            animation: moodTransition var(--mood-transition-duration) ease-in-out;
+        }
+
+        body.day-night-transition {
+            animation: dayNightTransition 2s ease-in-out;
+        }
+
+        @keyframes dayNightTransition {
+            0% { filter: brightness(1) hue-rotate(0deg); }
+            50% { filter: brightness(0.7) hue-rotate(15deg); }
+            100% { filter: brightness(1) hue-rotate(0deg); }
+        }
+
+        /* Particle Canvas Background */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Hero Section with World Map */
+        .hero-section {
+            position: relative;
+            height: 60vh;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI1MDAiIHZpZXdCb3g9IjAgMCAxMDAwIDUwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAgMGgxMDAwdjUwMEgweiIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjAzKSIvPgo8cGF0aCBkPSJNMTAwIDEwMGMzMCAwIDEwMCAwIDIwMCAyMHMxNTAgMTAgMjAwIDBzMTAwLTEwIDIwMCAwczEwMCAyMCAyMDAgMTB2MzBjLTMwIDAtMTAwIDAtMjAwLTIwcy0xNTAtMTAtMjAwIDBzLTEwMCAxMC0yMDAgMHMtMTAwLTIwLTIwMC0xMHYtMzB6IiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDUpIi8+CjxwYXRoIGQ9Ik0yMDAgMjAwYzUwIDAgMTUwIDEwIDI1MCAyMHMxMDAgMTAgMjAwIDBzMTUwLTEwIDI1MCAyMHMxMDAgMCAyMDAgMTB2NDBjLTUwIDAtMTUwLTEwLTI1MC0yMHMtMTAwLTEwLTIwMCAwcy0xNTAgMTAtMjUwLTIwcy0xMDAgMC0yMDAtMTB2LTQweiIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KSIvPgo8cGF0aCBkPSJNMTAwIDMwMGM0MCA1IDEyMCAxNSAyMjAgMjVzMTIwIDUgMjIwIDBzMTIwLTE1IDIyMC0yNXMxMjAtNSAyMjAgMTB2NTBjLTQwLTUtMTIwLTE1LTIyMC0yNXMtMTIwLTUtMjIwIDBzLTEyMCAxNS0yMjAgMjVzLTEyMCA1LTIyMC0xMHYtNTB6IiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDYpIi8+Cjwvc3ZnPg==') center/cover,
+                       var(--hero-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            overflow: hidden;
+            margin-bottom: 40px;
+            transition: background var(--mood-transition-duration) ease-in-out;
+        }
+
+        .hero-content {
+            z-index: 10;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: heroTitleGlow 3s ease-in-out infinite alternate;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        @keyframes heroTitleGlow {
+            0% { text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(74, 144, 226, 0.5); }
+            100% { text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 50px rgba(74, 144, 226, 0.8); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* City Markers on World Map */
+        .city-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: rgba(231, 76, 60, 0.8);
+            border-radius: 50%;
+            animation: cityPulse 2s infinite;
+        }
+
+        .city-marker.major {
+            width: 16px;
+            height: 16px;
+            background: rgba(74, 144, 226, 0.9);
+        }
+
+        .city-marker.breaking {
+            background: rgba(243, 156, 18, 0.9);
+            animation: newsPopIn 0.8s ease-out, cityPulse 2s infinite 0.8s;
+        }
+
+        .city-marker:nth-child(1) { top: 25%; left: 15%; }  /* New York */
+        .city-marker:nth-child(2) { top: 20%; left: 45%; }  /* London */
+        .city-marker:nth-child(3) { top: 35%; left: 75%; }  /* Tokyo */
+        .city-marker:nth-child(4) { top: 45%; left: 25%; }  /* São Paulo */
+        .city-marker:nth-child(5) { top: 40%; left: 55%; }  /* Mumbai */
+        .city-marker:nth-child(6) { top: 55%; left: 70%; }  /* Sydney */
+
+        @keyframes cityPulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 0.6; 
+            }
+            50% { 
+                transform: scale(1.5); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes newsPopIn {
+            0% { 
+                transform: scale(0) rotate(180deg); 
+                opacity: 0; 
+            }
+            100% { 
+                transform: scale(1) rotate(0deg); 
+                opacity: 1; 
+            }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            grid-template-columns: 1fr 350px;
+            min-height: 100vh;
+            transition: all 0.5s ease;
+        }
+
+        .main-dashboard {
+            grid-column: 1;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+        }
+
+        /* Live Activity Feed Sidebar */
+        .activity-sidebar {
+            grid-column: 2;
+            grid-row: 1 / -1;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            /* max-height: 100vh; */
+            height: 100%;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #e74c3c;
+            border-radius: 50%;
+            animation: livePulse 2s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* Weather Widget */
+        .weather-widget {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .weather-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .weather-temp {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .weather-location {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .weather-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* Rain Animation */
+        .raindrop {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background: linear-gradient(to bottom, rgba(135, 206, 250, 0.6), rgba(135, 206, 250, 0.2));
+            border-radius: 50%;
+            animation: rainFall 1s linear infinite;
+        }
+
+        @keyframes rainFall {
+            0% { transform: translateY(-20px); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Sun Animation */
+        .sun-icon {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ffd700 30%, #ffed4e 70%);
+            border-radius: 50%;
+            position: relative;
+            animation: sunRotate 8s linear infinite;
+        }
+
+        .sun-icon::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: conic-gradient(from 0deg, transparent, #ffd700, transparent, #ffd700, transparent);
+            border-radius: 50%;
+            animation: sunRotate 8s linear infinite reverse;
+        }
+
+        @keyframes sunRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Cloud Animation */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+            animation: cloudDrift 15s linear infinite;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+        }
+
+        .cloud.small {
+            width: 30px;
+            height: 15px;
+            top: 20%;
+        }
+
+        .cloud.small::before {
+            width: 20px;
+            height: 20px;
+            top: -10px;
+            left: 8px;
+        }
+
+        .cloud.small::after {
+            width: 15px;
+            height: 15px;
+            top: -7px;
+            right: 8px;
+        }
+
+        @keyframes cloudDrift {
+            0% { left: -50px; }
+            100% { left: 120%; }
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            margin-bottom: 25px;
+        }
+
+        .activity-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .activity-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(5px);
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+        }
+
+        .activity-text {
+            color: #fff;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .activity-text-animated {
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .activity-text-animated.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Enhanced Breaking News Banner */
+        .breaking-news {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(220, 38, 127, 0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(231, 76, 60, 0.3);
+            border-left: none;
+            border-right: none;
+            padding: 20px 0;
+            overflow: hidden;
+            animation: glowingBorder 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .breaking-news::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(231, 76, 60, 0.1) 20%, 
+                rgba(231, 76, 60, 0.2) 50%, 
+                rgba(231, 76, 60, 0.1) 80%, 
+                transparent 100%);
+            animation: shimmerEffect 4s linear infinite;
+        }
+
+        .breaking-news-content {
+            white-space: nowrap;
+            animation: marquee 40s linear infinite;
+            font-weight: 700;
+            font-size: 20px;
+            color: #fff;
+            position: relative;
+            z-index: 2;
+            display: inline-block;
+        }
+
+        .breaking-news-content .letter {
+            display: inline-block;
+            animation: letterWave 4s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.1s);
+            color: inherit;
+            font-size: inherit;
+        }
+
+        .breaking-news-content .letter:first-child {
+            font-size: 22px;
+            animation: emojiPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes emojiPulse {
+            0%, 100% { 
+                transform: scale(1) translateY(0px); 
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.2) translateY(-2px); 
+                filter: brightness(1.3);
+            }
+        }
+
+        @keyframes glowingBorder {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+                border-color: rgba(231, 76, 60, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(231, 76, 60, 0.8);
+                border-color: rgba(231, 76, 60, 0.6);
+            }
+        }
+
+        @keyframes shimmerEffect {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+
+        @keyframes letterWave {
+            0%, 100% { transform: translateY(0px); }
+            25% { transform: translateY(-3px); }
+            75% { transform: translateY(3px); }
+        }
+
+        /* Header with Search and Filters */
+        .header {
+            padding: 32px 32px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .search-container {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 12px 20px;
+            width: 300px;
+            transition: all 0.3s ease;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .search-bar::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-bar:focus {
+            width: 400px;
+            box-shadow: 0 0 30px rgba(74, 144, 226, 0.4), 
+                        0 8px 32px rgba(0, 0, 0, 0.15), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(74, 144, 226, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Enhanced Search Experience */
+        .search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 500;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .search-overlay.active {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0 0 20px 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 1000;
+        }
+
+        .search-suggestions.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            animation: suggestionSlide 0.4s ease-out;
+        }
+
+        @keyframes suggestionSlide {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            color: #fff;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .suggestion-icon {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .suggestion-text {
+            font-size: 14px;
+        }
+
+        .suggestion-category {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-left: auto;
+        }
+
+        .dashboard.search-active .main-dashboard {
+            /* No effects when search is active */
+        }
+
+        .dashboard.search-active .activity-sidebar {
+            /* No effects when search is active */
+        }
+
+        .category-filters {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 16px 28px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-chip:nth-child(1) { animation-delay: 0s; }
+        .filter-chip:nth-child(2) { animation-delay: 0.5s; }
+        .filter-chip:nth-child(3) { animation-delay: 1s; }
+        .filter-chip:nth-child(4) { animation-delay: 1.5s; }
+        .filter-chip:nth-child(5) { animation-delay: 2s; }
+        .filter-chip:nth-child(6) { animation-delay: 2.5s; }
+
+        .filter-chip::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.6s ease;
+        }
+
+        .filter-chip.ripple::before {
+            animation: ripple 0.6s ease-out;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-12px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .filter-chip.active {
+            background: rgba(74, 144, 226, 0.4);
+            border-color: rgba(74, 144, 226, 0.7);
+            box-shadow: 0 12px 30px rgba(74, 144, 226, 0.3);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 0.8;
+            }
+            100% {
+                width: 300px;
+                height: 300px;
+                opacity: 0;
+            }
+        }
+
+        /* Trending Topics Section */
+        .trending-section {
+            padding: 40px 32px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            margin: 20px 32px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .trending-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(130deg, #ff6b6b,#96ceb4, #ffa726, #ff6b6b);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            margin-bottom: 30px;
+            text-shadow: none;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .trending-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .trending-topic {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .trending-topic::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 25px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffa726);
+            z-index: -1;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: xor;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            padding: 2px;
+        }
+
+        .trending-topic.hot {
+            font-size: 24px;
+        }
+
+        .trending-topic.medium {
+            font-size: 20px;
+        }
+
+        .trending-topic.normal {
+            font-size: 16px;
+        }
+
+        .trending-topic:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 0 32px 32px;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .article-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            perspective: 1000px;
+            animation: cardEntrance 0.8s ease-out both;
+            animation-delay: calc(var(--index) * 0.15s);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .article-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            border-radius: 16px;
+        }
+
+        .article-card.expanded::before {
+            opacity: 1;
+        }
+
+        .article-card:hover {
+            transform: translateY(-20px) rotateX(5deg) rotateY(5deg);
+            box-shadow: var(--dynamic-shadow, 0 25px 50px rgba(0, 0, 0, 0.2));
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        @keyframes cardEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(100px) rotateX(45deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+
+        .article-card.expanding {
+            z-index: 1000;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-origin: center;
+            will-change: transform, width, height, top, left;
+            backface-visibility: hidden;
+        }
+
+        .article-card.expanded {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            max-width: 800px;
+            height: 80vh;
+            z-index: 1000;
+            overflow-y: auto;
+            max-height: 80vh;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-origin: center;
+            will-change: transform, width, height, top, left;
+            backface-visibility: hidden;
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            background: linear-gradient(45deg, #f0f2f5 25%, transparent 25%, transparent 75%, #f0f2f5 75%, #f0f2f5),
+                        linear-gradient(45deg, #f0f2f5 25%, transparent 25%, transparent 75%, #f0f2f5 75%, #f0f2f5);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-color: #e1e8ed;
+            position: relative;
+        }
+
+        .article-image.placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .article-image.placeholder::after {
+            content: '📰';
+            animation: placeholderPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes placeholderPulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .article-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            color: #fff;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .article-summary {
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        .article-source {
+            font-weight: 600;
+            color: #4a90e2;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .article-full-content {
+            position: relative;
+            z-index: 2;
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Share Button and Animation */
+        .share-button {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            background: rgba(74, 144, 226, 0.9);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .share-button:hover {
+            background: rgba(74, 144, 226, 1);
+            transform: scale(1.1);
+        }
+
+        .share-icons-container {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            pointer-events: none;
+        }
+
+        .share-icon {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s ease;
+        }
+
+        .share-icon.facebook { color: #1877f2; }
+        .share-icon.twitter { color: #1da1f2; }
+        .share-icon.linkedin { color: #0077b5; }
+        .share-icon.whatsapp { color: #25d366; }
+
+        .share-icons-container.burst .share-icon {
+            animation: iconBurst 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+                       iconSettle 0.5s ease-out 0.8s forwards;
+        }
+
+        .share-icons-container.burst .share-icon:nth-child(1) {
+            animation-delay: 0s, 0.8s;
+        }
+        .share-icons-container.burst .share-icon:nth-child(2) {
+            animation-delay: 0.1s, 0.9s;
+        }
+        .share-icons-container.burst .share-icon:nth-child(3) {
+            animation-delay: 0.2s, 1s;
+        }
+        .share-icons-container.burst .share-icon:nth-child(4) {
+            animation-delay: 0.3s, 1.1s;
+        }
+
+        @keyframes iconBurst {
+            0% {
+                opacity: 0;
+                transform: scale(0) translate(0, 0);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes iconSettle {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Different burst directions for each icon */
+        .share-icons-container.burst .share-icon:nth-child(1) {
+            transform: translate(-60px, -60px);
+        }
+        .share-icons-container.burst .share-icon:nth-child(2) {
+            transform: translate(60px, -60px);
+        }
+        .share-icons-container.burst .share-icon:nth-child(3) {
+            transform: translate(-60px, 60px);
+        }
+        .share-icons-container.burst .share-icon:nth-child(4) {
+            transform: translate(60px, 60px);
+        }
+
+        .new-content-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            background: #e74c3c;
+            border-radius: 50%;
+            animation: newContentPulse 2s infinite;
+        }
+
+        @keyframes newContentPulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(1.3); 
+                opacity: 0.7; 
+            }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+        }
+
+        .article-card.expanded .close-btn,
+        .article-card.expanding .close-btn {
+            display: flex;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 0, 0, 0.8);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+
+        /* Reading Progress Indicator */
+        .progress-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .progress-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 4;
+        }
+
+        .progress-ring-bar {
+            fill: none;
+            stroke: #4a90e2;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 226.19;
+            stroke-dashoffset: 226.19;
+            transition: stroke-dashoffset 0.3s ease;
+            animation: progressGlow 3s ease-in-out infinite;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes progressGlow {
+            0%, 100% { stroke: #4a90e2; filter: drop-shadow(0 0 5px #4a90e2); }
+            50% { stroke: #ffffff; filter: drop-shadow(0 0 10px #ffffff); }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: background 0.8s cubic-bezier(0.23, 1, 0.32, 1), 
+                        backdrop-filter 0.8s cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1),
+                        visibility 0s linear 0.8s;
+            will-change: backdrop-filter, opacity;
+        }
+
+        .overlay.active {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            opacity: 1;
+            visibility: visible;
+            transition: background 0.8s cubic-bezier(0.23, 1, 0.32, 1), 
+                        backdrop-filter 0.8s cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1),
+                        visibility 0s linear 0s;
+        }
+
+                /* Enhanced Loading States with Skeleton Screens */
+        .loading-container {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .skeleton-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-image {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-title {
+            width: 80%;
+            height: 24px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite;
+            animation-delay: 0.2s;
+        }
+
+        .skeleton-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-meta-item {
+            width: 60px;
+            height: 16px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite;
+            animation-delay: 0.4s;
+        }
+
+        .skeleton-text {
+            width: 100%;
+            height: 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite;
+            animation-delay: 0.6s;
+        }
+
+        .skeleton-text:last-child {
+            width: 70%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        body.dark-mode .skeleton-image,
+        body.dark-mode .skeleton-title,
+        body.dark-mode .skeleton-meta-item,
+        body.dark-mode .skeleton-text {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background-size: 200px 100%;
+        }
+
+         /* Toast Notifications */
+         .toast-container {
+             position: fixed;
+             top: 20px;
+             right: 20px;
+             z-index: 2000;
+             pointer-events: none;
+         }
+
+         .toast {
+             background: rgba(255, 255, 255, 0.15);
+             backdrop-filter: blur(20px);
+             border: 1px solid rgba(255, 255, 255, 0.2);
+             border-radius: 12px;
+             padding: 16px 20px;
+             margin-bottom: 10px;
+             color: #fff;
+             font-weight: 500;
+             min-width: 300px;
+             max-width: 400px;
+             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+             animation: toastSlideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+             pointer-events: auto;
+             cursor: pointer;
+             position: relative;
+             overflow: hidden;
+         }
+
+         .toast::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             height: 3px;
+             background: linear-gradient(90deg, var(--primary) 0%, rgba(255, 255, 255, 0.8) 100%);
+         }
+
+         .toast.success {
+             border-color: rgba(39, 174, 96, 0.4);
+         }
+
+         .toast.success::before {
+             background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+         }
+
+         .toast.warning {
+             border-color: rgba(243, 156, 18, 0.4);
+         }
+
+         .toast.warning::before {
+             background: linear-gradient(90deg, #f39c12 0%, #e67e22 100%);
+         }
+
+         .toast.error {
+             border-color: rgba(231, 76, 60, 0.4);
+         }
+
+         .toast.error::before {
+             background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+         }
+
+         .toast-header {
+             display: flex;
+             align-items: center;
+             gap: 12px;
+             margin-bottom: 8px;
+         }
+
+         .toast-icon {
+             font-size: 20px;
+             animation: bellRing 1s ease-in-out;
+         }
+
+         .toast-title {
+             font-weight: 600;
+             font-size: 16px;
+         }
+
+         .toast-message {
+             font-size: 14px;
+             opacity: 0.9;
+             line-height: 1.4;
+         }
+
+         .toast-close {
+             position: absolute;
+             top: 8px;
+             right: 8px;
+             background: none;
+             border: none;
+             color: rgba(255, 255, 255, 0.7);
+             cursor: pointer;
+             font-size: 18px;
+             width: 24px;
+             height: 24px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             border-radius: 50%;
+             transition: all 0.2s ease;
+         }
+
+         .toast-close:hover {
+             background: rgba(255, 255, 255, 0.1);
+             color: #fff;
+         }
+
+         @keyframes toastSlideIn {
+             0% {
+                 transform: translateX(400px) rotate(10deg);
+                 opacity: 0;
+             }
+             100% {
+                 transform: translateX(0) rotate(0deg);
+                 opacity: 1;
+             }
+         }
+
+         @keyframes bellRing {
+             0%, 100% { transform: rotate(0deg); }
+             10%, 30%, 50%, 70%, 90% { transform: rotate(-15deg); }
+             20%, 40%, 60%, 80% { transform: rotate(15deg); }
+         }
+
+         .toast.slide-out {
+             animation: toastSlideOut 0.3s ease-in forwards;
+         }
+
+         @keyframes toastSlideOut {
+             0% {
+                 transform: translateX(0) rotate(0deg);
+                 opacity: 1;
+             }
+             100% {
+                 transform: translateX(400px) rotate(-10deg);
+                 opacity: 0;
+             }
+         }
+
+         /* Mood Indicator */
+         .mood-indicator {
+             position: relative;
+             background: rgba(255, 255, 255, 0.1);
+             backdrop-filter: blur(20px);
+             border: 1px solid rgba(255, 255, 255, 0.2);
+             border-radius: 50px;
+             padding: 12px 20px;
+             color: #fff;
+             font-weight: 600;
+             font-size: 14px;
+             display: flex;
+             align-items: center;
+             gap: 8px;
+             transition: all 0.3s ease;
+             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                         inset 0 1px 0 rgba(255, 255, 255, 0.2);
+             cursor: pointer;
+             user-select: none;
+         }
+
+         .mood-indicator:hover {
+             background: rgba(255, 255, 255, 0.15);
+             transform: translateY(-2px);
+             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 
+                         inset 0 1px 0 rgba(255, 255, 255, 0.3);
+         }
+
+         .mood-indicator.manual-mode {
+             border-color: rgba(74, 144, 226, 0.5);
+             box-shadow: 0 8px 32px rgba(74, 144, 226, 0.2), 
+                         inset 0 1px 0 rgba(255, 255, 255, 0.2);
+         }
+
+         .mood-mode-indicator {
+             font-size: 10px;
+             opacity: 0.7;
+             margin-left: 4px;
+         }
+
+         .mood-indicator .mood-emoji {
+             font-size: 18px;
+             animation: moodPulse 2s ease-in-out infinite;
+         }
+
+                 @keyframes moodPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Action Buttons Container */
+        .action-buttons-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 3px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .celestial-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ffd700;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .celestial-icon::before {
+            content: '☀️';
+            position: absolute;
+            transition: all 0.6s ease;
+        }
+
+        body.dark-mode .celestial-icon {
+            background: #2c3e50;
+            transform: translateX(27px);
+            box-shadow: 0 0 10px rgba(44, 62, 80, 0.5);
+            animation: celestialRotate 0.6s ease-in-out;
+        }
+
+        body.dark-mode .celestial-icon::before {
+            content: '🌙';
+        }
+
+        @keyframes celestialRotate {
+            0% { transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(13.5px) rotate(180deg) scale(0.8); }
+            100% { transform: translateX(27px) rotate(360deg); }
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background: rgba(44, 62, 80, 0.8);
+            border-color: rgba(44, 62, 80, 0.9);
+        }
+
+         /* Responsive Design */
+        @media (max-width: 1280px) {
+            .dashboard {
+                grid-template-columns: 1fr 300px;
+            }
+            
+            .articles-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .search-bar:focus {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+            }
+            
+            .main-dashboard {
+                grid-column: 1;
+                grid-row: 1 / 4;
+            }
+            
+            .activity-sidebar {
+                grid-column: 1;
+                grid-row: 4;
+                border-left: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                max-height: 300px;
+            }
+            
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                padding: 0 20px 20px;
+            }
+            
+            .header {
+                padding: 20px;
+                gap: 16px;
+            }
+            
+            .articles-grid {
+                gap: 16px;
+            }
+            
+            .search-bar {
+                width: 250px;
+            }
+            
+            .search-bar:focus {
+                width: 300px;
+            }
+            
+            .article-card.expanded {
+                width: 95vw;
+                height: 90vh;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
+            
+            .search-bar:focus {
+                width: 100%;
+            }
+            
+            .category-filters {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Canvas Background -->
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="dashboard" id="dashboard">
+        <div class="main-dashboard">
+            <!-- Hero Section with World Map -->
+            <div class="hero-section">
+                <div class="city-marker major"></div>
+                <div class="city-marker"></div>
+                <div class="city-marker major"></div>
+                <div class="city-marker"></div>
+                <div class="city-marker breaking"></div>
+                <div class="city-marker"></div>
+                
+                <div class="hero-content">
+                    <h1 class="hero-title">Global News Hub</h1>
+                    <p class="hero-subtitle">Experience news like never before with real-time updates from around the world</p>
+                </div>
+            </div>
+
+            <!-- Enhanced Breaking News Banner -->
+            <div class="breaking-news">
+                <div class="breaking-news-content" id="breakingNewsText">
+                    🔴 BREAKING: Major tech breakthrough announced • Global markets surge • Climate summit reaches historic agreement • Space mission launches successfully
+                </div>
+            </div>
+
+            <!-- Header with Search and Filters -->
+            <div class="header">
+                <div class="search-container">
+                    <input type="text" class="search-bar" placeholder="Search news..." id="searchInput">
+                    <div class="search-suggestions" id="searchSuggestions"></div>
+                </div>
+                <div class="category-filters">
+                    <div class="filter-chip active" data-category="all">🌐 All</div>
+                    <div class="filter-chip" data-category="technology">💻 Technology</div>
+                    <div class="filter-chip" data-category="business">💼 Business</div>
+                    <div class="filter-chip" data-category="science">🔬 Science</div>
+                    <div class="filter-chip" data-category="politics">🏛️ Politics</div>
+                    <div class="filter-chip" data-category="sports">⚽ Sports</div>
+                </div>
+            </div>
+
+            <!-- Trending Topics Section -->
+            <div class="trending-section">
+                <h2 class="trending-title">🔥 Trending Now</h2>
+                <div class="trending-cloud" id="trendingCloud">
+                    <span class="trending-topic hot" data-trend="ai">Artificial Intelligence</span>
+                    <span class="trending-topic medium" data-trend="crypto">Cryptocurrency</span>
+                    <span class="trending-topic normal" data-trend="climate">Climate Change</span>
+                    <span class="trending-topic hot" data-trend="space">Space Exploration</span>
+                    <span class="trending-topic medium" data-trend="health">Global Health</span>
+                    <span class="trending-topic normal" data-trend="economy">Economic Recovery</span>
+                    <span class="trending-topic hot" data-trend="tech">Tech Innovation</span>
+                    <span class="trending-topic medium" data-trend="energy">Renewable Energy</span>
+                    <span class="trending-topic normal" data-trend="politics">Election 2024</span>
+                    <span class="trending-topic medium" data-trend="olympics">Olympic Games</span>
+                    <span class="trending-topic normal" data-trend="quantum">Quantum Computing</span>
+                    <span class="trending-topic hot" data-trend="metaverse">Metaverse</span>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="articles-grid" id="articlesGrid">
+                    <!-- Articles will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Activity Feed Sidebar -->
+        <div class="activity-sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">
+                    <span class="pulse-dot"></span>
+                    Live Activity
+                </h3>
+            </div>
+
+            <!-- Weather Widget -->
+            <div class="weather-widget" id="weatherWidget">
+                <div class="weather-header">
+                    <div>
+                        <div class="weather-temp" id="weatherTemp">22°C</div>
+                        <div class="weather-location">New York</div>
+                    </div>
+                    <div class="sun-icon" id="weatherIcon"></div>
+                </div>
+                <div class="weather-animation" id="weatherAnimation">
+                    <!-- Weather animations will be added dynamically -->
+                </div>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="activity-feed" id="activityFeed">
+                <!-- Activity items will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay"></div>
+
+    <!-- Overlay for expanded cards -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Reading Progress Indicator -->
+    <div class="progress-container" id="progressContainer">
+        <svg class="progress-ring">
+            <circle class="progress-ring-bg" cx="40" cy="40" r="36"></circle>
+            <circle class="progress-ring-bar" cx="40" cy="40" r="36" id="progressBar"></circle>
+        </svg>
+        <div class="progress-text" id="progressText">0%</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+
+
+    <!-- Infinite Scroll Loading Indicator -->
+    <div class="scroll-loading-indicator" id="scrollLoadingIndicator">
+        <div class="newspaper-spinner">📰</div>
+        <div class="loading-text">Loading more stories...</div>
+    </div>
+
+    <!-- Action Buttons Container -->
+    <div class="action-buttons-container">
+        <!-- Dark Mode Toggle -->
+        <div class="dark-mode-toggle" id="darkModeToggle">
+            <div class="celestial-icon" id="celestialIcon"></div>
+        </div>
+
+        <!-- Mood Indicator -->
+        <div class="mood-indicator" id="moodIndicator">
+            <span class="mood-emoji" id="moodEmoji">😐</span>
+            <span id="moodText">Neutral</span>
+        </div>
+
+        <!-- Time Machine Interface -->
+        <!-- <div class="time-machine-container collapsed" id="timeMachineContainer">
+            <div class="time-machine-icon">⏰</div>
+            <div class="time-machine-content">
+                <div class="time-machine-title">⏰ Time Machine</div>
+                <div class="timeline-container">
+                    <input type="range" min="0" max="100" value="75" class="timeline-slider" id="timelineSlider">
+                </div>
+                <div class="timeline-labels">
+                    <span>1950s</span>
+                    <span>1980s</span>
+                    <span>Today</span>
+                    <span>2050s</span>
+                </div>
+            </div>
+        </div> -->
+    </div>
+
+    <!-- Loading Container -->
+    <div class="loading-container" id="loadingContainer">
+        <div class="articles-grid">
+            <div class="skeleton-card">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-meta">
+                    <div class="skeleton-meta-item"></div>
+                    <div class="skeleton-meta-item"></div>
+                    <div class="skeleton-meta-item"></div>
+                </div>
+                <div class="skeleton-title"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-meta">
+                    <div class="skeleton-meta-item"></div>
+                    <div class="skeleton-meta-item"></div>
+                    <div class="skeleton-meta-item"></div>
+                </div>
+                <div class="skeleton-title"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-meta">
+                    <div class="skeleton-meta-item"></div>
+                    <div class="skeleton-meta-item"></div>
+                    <div class="skeleton-meta-item"></div>
+                </div>
+                <div class="skeleton-title"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particle System Class
+        class ParticleSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.mouse = { x: 0, y: 0 };
+                this.symbols = ['📰', '📡', '🔔', '📊', '🌐', '⚡', '📢', '🔴'];
+                
+                this.resizeCanvas();
+                this.initParticles();
+                this.bindEvents();
+                this.animate();
+            }
+
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            initParticles() {
+                const particleCount = Math.min(200, Math.floor((this.canvas.width * this.canvas.height) / 8000));
+                
+                for (let i = 0; i < particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        size: Math.random() * 12 + 8,
+                        symbol: this.symbols[Math.floor(Math.random() * this.symbols.length)],
+                        opacity: Math.random() * 0.3 + 0.1,
+                        originalVx: (Math.random() - 0.5) * 0.5,
+                        originalVy: (Math.random() - 0.5) * 0.5,
+                        phase: Math.random() * Math.PI * 2,
+                        frequency: Math.random() * 0.02 + 0.01
+                    });
+                }
+            }
+
+            bindEvents() {
+                window.addEventListener('resize', () => this.resizeCanvas());
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+            }
+
+            updateParticles() {
+                this.particles.forEach((particle, index) => {
+                    // Calculate distance from mouse
+                    const dx = this.mouse.x - particle.x;
+                    const dy = this.mouse.y - particle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const maxDistance = 150;
+
+                    // Mouse interaction - scatter and regroup
+                    if (distance < maxDistance) {
+                        const force = (maxDistance - distance) / maxDistance;
+                        const angle = Math.atan2(dy, dx);
+                        particle.vx -= Math.cos(angle) * force * 0.5;
+                        particle.vy -= Math.sin(angle) * force * 0.5;
+                    } else {
+                        // Return to original movement pattern
+                        particle.vx += (particle.originalVx - particle.vx) * 0.05;
+                        particle.vy += (particle.originalVy - particle.vy) * 0.05;
+                    }
+
+                    // Add sine/cosine wave movement
+                    particle.phase += particle.frequency;
+                    particle.x += particle.vx + Math.sin(particle.phase) * 0.3;
+                    particle.y += particle.vy + Math.cos(particle.phase) * 0.3;
+
+                    // Wrap around screen edges
+                    if (particle.x < -20) particle.x = this.canvas.width + 20;
+                    if (particle.x > this.canvas.width + 20) particle.x = -20;
+                    if (particle.y < -20) particle.y = this.canvas.height + 20;
+                    if (particle.y > this.canvas.height + 20) particle.y = -20;
+
+                    // Damping
+                    particle.vx *= 0.99;
+                    particle.vy *= 0.99;
+                });
+            }
+
+            drawParticles() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.particles.forEach(particle => {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = particle.opacity;
+                    this.ctx.font = `${particle.size}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    
+                    // Add subtle rotation
+                    this.ctx.translate(particle.x, particle.y);
+                    this.ctx.rotate(particle.phase * 0.1);
+                    this.ctx.fillText(particle.symbol, 0, 0);
+                    this.ctx.restore();
+                });
+            }
+
+            animate() {
+                this.updateParticles();
+                this.drawParticles();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Enhanced Breaking News Animation
+        function animateBreakingNews() {
+            const breakingText = document.getElementById('breakingNewsText');
+            const text = breakingText.textContent;
+            
+            // Split text into individual characters while preserving emojis
+            const chars = [...text]; // Use spread operator to properly handle Unicode characters including emojis
+            const wrappedText = chars.map((char, index) => {
+                if (char === ' ') return ' ';
+                return `<span class="letter" style="--i: ${index}">${char}</span>`;
+            }).join('');
+            
+            breakingText.innerHTML = wrappedText;
+        }
+
+        // City Marker Animation Controller
+        function animateCityMarkers() {
+            const markers = document.querySelectorAll('.city-marker');
+            
+            setInterval(() => {
+                // Randomly make a city marker "breaking news"
+                const randomMarker = markers[Math.floor(Math.random() * markers.length)];
+                if (!randomMarker.classList.contains('breaking')) {
+                    randomMarker.classList.add('breaking');
+                    
+                    // Remove breaking class after animation
+                    setTimeout(() => {
+                        randomMarker.classList.remove('breaking');
+                    }, 3000);
+                }
+            }, 8000);
+        }
+
+        // Sentiment Analysis System
+        class SentimentAnalyzer {
+            constructor() {
+                this.positiveWords = [
+                    'breakthrough', 'success', 'win', 'victory', 'achieve', 'accomplish', 
+                    'triumph', 'celebrate', 'progress', 'growth', 'improve', 'excellent',
+                    'outstanding', 'amazing', 'wonderful', 'fantastic', 'great', 'good',
+                    'positive', 'beneficial', 'advance', 'innovation', 'discover', 'cure'
+                ];
+                
+                this.negativeWords = [
+                    'crisis', 'disaster', 'fail', 'collapse', 'crash', 'decline', 'fall',
+                    'drop', 'lose', 'defeat', 'problem', 'issue', 'concern', 'threat',
+                    'danger', 'risk', 'warning', 'alert', 'emergency', 'tragic', 'death',
+                    'war', 'conflict', 'violence', 'attack', 'strike', 'protest', 'scandal'
+                ];
+            }
+
+            analyze(text) {
+                const words = text.toLowerCase().split(/\s+/);
+                let positiveScore = 0;
+                let negativeScore = 0;
+
+                words.forEach(word => {
+                    if (this.positiveWords.some(pw => word.includes(pw))) {
+                        positiveScore++;
+                    }
+                    if (this.negativeWords.some(nw => word.includes(nw))) {
+                        negativeScore++;
+                    }
+                });
+
+                const totalScore = positiveScore - negativeScore;
+                
+                if (totalScore > 0) return 'positive';
+                if (totalScore < 0) return 'negative';
+                return 'neutral';
+            }
+        }
+
+        // Mood-based Color System
+        class MoodColorSystem {
+            constructor() {
+                this.sentimentAnalyzer = new SentimentAnalyzer();
+                this.currentMood = 'neutral';
+                this.moodMode = 'auto'; // 'auto', 'positive', 'neutral', 'negative'
+                this.moodIndicator = null;
+                this.lastAnalysis = null;
+                this.moodHues = {
+                    positive: 120, // Green
+                    neutral: 220,  // Blue
+                    negative: 0    // Red
+                };
+                this.moodModes = [
+                    { name: 'auto', emoji: '🤖', text: 'Auto', description: 'Analyzes news sentiment' },
+                    { name: 'positive', emoji: '😊', text: 'Positive', description: 'Force positive mood' },
+                    { name: 'neutral', emoji: '😐', text: 'Neutral', description: 'Force neutral mood' },
+                    { name: 'negative', emoji: '😟', text: 'Concerned', description: 'Force negative mood' }
+                ];
+            }
+
+            init() {
+                this.moodIndicator = document.getElementById('moodIndicator');
+                if (this.moodIndicator) {
+                    this.moodIndicator.addEventListener('click', () => this.cycleMoodMode());
+                    this.updateMoodDisplay();
+                }
+            }
+
+            cycleMoodMode() {
+                const currentIndex = this.moodModes.findIndex(mode => mode.name === this.moodMode);
+                const nextIndex = (currentIndex + 1) % this.moodModes.length;
+                this.moodMode = this.moodModes[nextIndex].name;
+
+                // Apply the mood based on mode
+                if (this.moodMode === 'auto') {
+                    this.analyzeDashboardMood();
+                } else {
+                    this.updateMood(this.moodMode);
+                }
+
+                this.updateMoodDisplay();
+                this.showModeChangeNotification();
+            }
+
+            analyzeDashboardMood() {
+                if (this.moodMode !== 'auto') return;
+
+                const headlines = Array.from(document.querySelectorAll('.article-title'))
+                    .map(el => el.textContent);
+                
+                const sentiments = headlines.map(headline => 
+                    this.sentimentAnalyzer.analyze(headline)
+                );
+
+                // Calculate overall mood
+                const counts = sentiments.reduce((acc, sentiment) => {
+                    acc[sentiment] = (acc[sentiment] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const dominantMood = Object.keys(counts).reduce((a, b) => 
+                    counts[a] > counts[b] ? a : b
+                );
+
+                // Store analysis results
+                this.lastAnalysis = {
+                    headlines: headlines.length,
+                    positive: counts.positive || 0,
+                    neutral: counts.neutral || 0,
+                    negative: counts.negative || 0,
+                    dominant: dominantMood
+                };
+
+                this.updateMood(dominantMood);
+            }
+
+            updateMood(newMood) {
+                if (this.currentMood === newMood) return;
+
+                this.currentMood = newMood;
+                const hue = this.moodHues[newMood];
+                
+                // Update CSS custom properties
+                document.documentElement.style.setProperty('--primary-hue', `${hue}deg`);
+                document.body.classList.add('mood-transition');
+
+                // Update mood indicator
+                this.updateMoodIndicator(newMood);
+
+                // Show mood change notification
+                this.showMoodNotification(newMood);
+
+                // Remove transition class after animation
+                setTimeout(() => {
+                    document.body.classList.remove('mood-transition');
+                }, 2000);
+            }
+
+            updateMoodDisplay() {
+                const moodEmoji = document.getElementById('moodEmoji');
+                const moodText = document.getElementById('moodText');
+                
+                if (!moodEmoji || !moodText) return;
+
+                const currentModeData = this.moodModes.find(mode => mode.name === this.moodMode);
+                
+                if (this.moodMode === 'auto') {
+                    const moodData = {
+                        positive: { emoji: '😊', text: 'Positive' },
+                        neutral: { emoji: '😐', text: 'Neutral' },
+                        negative: { emoji: '😟', text: 'Concerning' }
+                    };
+                    moodEmoji.textContent = moodData[this.currentMood].emoji;
+                    moodText.textContent = moodData[this.currentMood].text;
+                } else {
+                    moodEmoji.textContent = currentModeData.emoji;
+                    moodText.textContent = currentModeData.text;
+                }
+
+                // Update visual state
+                if (this.moodMode === 'auto') {
+                    this.moodIndicator.classList.remove('manual-mode');
+                } else {
+                    this.moodIndicator.classList.add('manual-mode');
+                }
+
+                // Add mode indicator
+                let modeIndicator = this.moodIndicator.querySelector('.mood-mode-indicator');
+                if (!modeIndicator) {
+                    modeIndicator = document.createElement('span');
+                    modeIndicator.className = 'mood-mode-indicator';
+                    this.moodIndicator.appendChild(modeIndicator);
+                }
+                modeIndicator.textContent = this.moodMode === 'auto' ? '🤖' : '👤';
+            }
+
+            updateMoodIndicator(mood) {
+                // This method is deprecated, using updateMoodDisplay instead
+                this.updateMoodDisplay();
+            }
+
+            showModeChangeNotification() {
+                const currentModeData = this.moodModes.find(mode => mode.name === this.moodMode);
+                const message = `Mood mode: ${currentModeData.text} - ${currentModeData.description}`;
+                
+                showToast(message, 'Mood Control', 'info', 4000);
+
+                // Show analysis details for auto mode
+                if (this.moodMode === 'auto' && this.lastAnalysis) {
+                    setTimeout(() => {
+                        const details = `📊 Analysis: ${this.lastAnalysis.positive} positive, ${this.lastAnalysis.neutral} neutral, ${this.lastAnalysis.negative} negative (${this.lastAnalysis.headlines} articles)`;
+                        showToast(details, 'Mood Analysis', 'info', 5000);
+                    }, 1000);
+                }
+            }
+
+            showMoodNotification(mood) {
+                const messages = {
+                    positive: 'Dashboard mood improved! 📈',
+                    neutral: 'Dashboard mood normalized 📊',
+                    negative: 'Dashboard mood shows concern 📉'
+                };
+
+                showToast(messages[mood], 'Mood Update', 'info', 5000);
+            }
+        }
+
+        // Toast Notification System
+        function showToast(message, title = '', type = 'info', duration = 4000) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                info: '🔔',
+                success: '✅',
+                warning: '⚠️',
+                error: '❌'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <span class="toast-icon">${icons[type]}</span>
+                    <span class="toast-title">${title}</span>
+                </div>
+                <div class="toast-message">${message}</div>
+                <button class="toast-close" onclick="removeToast(this.parentElement)">&times;</button>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Auto remove after duration
+            setTimeout(() => {
+                removeToast(toast);
+            }, duration);
+        }
+
+        function removeToast(toast) {
+            if (toast && toast.parentElement) {
+                toast.classList.add('slide-out');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        // Reading Progress System
+        class ReadingProgressTracker {
+            constructor() {
+                this.progressContainer = document.getElementById('progressContainer');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressText = document.getElementById('progressText');
+                this.radius = 36;
+                this.circumference = 2 * Math.PI * this.radius;
+                
+                this.progressBar.style.strokeDasharray = this.circumference;
+                this.progressBar.style.strokeDashoffset = this.circumference;
+            }
+
+            show() {
+                this.progressContainer.classList.add('visible');
+            }
+
+            hide() {
+                this.progressContainer.classList.remove('visible');
+            }
+
+            updateProgress(percentage) {
+                const offset = this.circumference - (percentage / 100) * this.circumference;
+                this.progressBar.style.strokeDashoffset = offset;
+                this.progressText.textContent = `${Math.round(percentage)}%`;
+            }
+
+            setupScrollTracking(articleElement) {
+                let isTracking = false;
+
+                const trackProgress = () => {
+                    if (!isTracking) return;
+
+                    const rect = articleElement.getBoundingClientRect();
+                    const scrollTop = articleElement.scrollTop;
+                    const scrollHeight = articleElement.scrollHeight;
+                    const clientHeight = articleElement.clientHeight;
+                    
+                    const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
+                    this.updateProgress(Math.min(100, Math.max(0, progress)));
+                };
+
+                // Start tracking when article is expanded
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.target.classList.contains('expanded')) {
+                            isTracking = true;
+                            this.show();
+                            articleElement.addEventListener('scroll', trackProgress);
+                        } else {
+                            isTracking = false;
+                            this.hide();
+                            articleElement.removeEventListener('scroll', trackProgress);
+                        }
+                    });
+                });
+
+                observer.observe(articleElement, { 
+                    attributes: true, 
+                    attributeFilter: ['class'] 
+                });
+            }
+        }
+
+        // Sample news data
+        const newsData = [
+            {
+                id: 1,
+                title: "Revolutionary AI Breakthrough Changes Everything",
+                summary: "Scientists have developed a new AI system that can understand and process human emotions with unprecedented accuracy, opening new possibilities for human-computer interaction.",
+                image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
+                source: "Tech Daily",
+                publishTime: "2 hours ago",
+                readTime: "5 min read",
+                category: "technology",
+                isNew: true,
+                fullContent: "In a groundbreaking development that could reshape the future of artificial intelligence, researchers at leading tech institutes have unveiled an AI system capable of recognizing, interpreting, and responding to human emotions with remarkable precision. This breakthrough represents a significant leap forward in the field of affective computing, potentially revolutionizing how we interact with technology in our daily lives. The new system, dubbed EmotiAI, uses advanced neural networks and machine learning algorithms to analyze facial expressions, voice patterns, and behavioral cues to determine emotional states with over 95% accuracy. Unlike previous emotion recognition systems that relied primarily on facial analysis, EmotiAI incorporates multiple data streams including speech patterns, physiological indicators, and contextual information to provide a comprehensive understanding of human emotional states."
+            },
+            {
+                id: 2,
+                title: "Global Climate Summit Reaches Historic Agreement",
+                summary: "World leaders unite on ambitious carbon reduction targets, marking a turning point in the fight against climate change with unprecedented international cooperation.",
+                image: "https://images.unsplash.com/photo-1569163139394-de44cb5894c9?w=600&h=400&fit=crop",
+                source: "Global News",
+                publishTime: "4 hours ago",
+                readTime: "7 min read",
+                category: "politics",
+                isNew: true,
+                fullContent: "After weeks of intense negotiations, world leaders have reached a landmark agreement at the Global Climate Summit that sets the most ambitious carbon reduction targets in history. The agreement, signed by 195 countries, commits to achieving net-zero emissions by 2040 - a decade earlier than previously planned. The accord includes specific provisions for developing nations, with wealthy countries pledging $500 billion in climate finance over the next five years. Environmental scientists are calling this a potential turning point in the global response to climate change, though they emphasize that implementation will be the ultimate test of the agreement's success."
+            },
+            {
+                id: 3,
+                title: "Space Mission Discovers Evidence of Ancient Life",
+                summary: "NASA's latest Mars rover has uncovered compelling evidence of microbial life that existed billions of years ago, reshaping our understanding of life in the universe.",
+                image: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=600&h=400&fit=crop",
+                source: "Space Today",
+                publishTime: "6 hours ago",
+                readTime: "6 min read",
+                category: "science",
+                isNew: false,
+                fullContent: "NASA's Perseverance rover has made what scientists are calling one of the most significant discoveries in the search for extraterrestrial life. Analysis of rock samples collected from Mars' Jezero Crater has revealed chemical signatures and microscopic structures that strongly suggest the presence of ancient microbial life. The findings, published in the journal Nature, show fossilized remains of what appear to be bacterial colonies that thrived in Mars' ancient lakes approximately 3.5 billion years ago. This discovery not only confirms that Mars once harbored life but also provides crucial insights into how life might emerge and evolve on other planets throughout the universe."
+            },
+            {
+                id: 4,
+                title: "Quantum Computing Achieves Major Milestone",
+                summary: "IBM's new quantum processor demonstrates quantum supremacy in practical applications, solving complex optimization problems impossible for classical computers.",
+                image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=600&h=400&fit=crop",
+                source: "Quantum Weekly",
+                publishTime: "8 hours ago",
+                readTime: "4 min read",
+                category: "technology",
+                isNew: false,
+                fullContent: "IBM has announced a breakthrough in quantum computing with their latest 1000-qubit processor, successfully demonstrating quantum advantage in solving real-world optimization problems. The quantum computer was able to solve complex logistics and financial modeling problems in minutes that would take classical supercomputers years to complete. This achievement marks a significant step toward practical quantum computing applications in industries ranging from pharmaceuticals to finance. The breakthrough overcomes previous limitations in quantum error correction and coherence time, bringing quantum computing closer to mainstream commercial applications."
+            },
+            {
+                id: 5,
+                title: "Global Markets Surge on Economic Recovery",
+                summary: "Stock markets worldwide hit record highs as economic indicators show strong recovery momentum, driven by technological innovation and increased consumer confidence.",
+                image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=400&fit=crop",
+                source: "Financial Times",
+                publishTime: "10 hours ago",
+                readTime: "3 min read",
+                category: "business",
+                isNew: false,
+                fullContent: "Global financial markets experienced their strongest rally in over a decade as economic recovery indicators exceeded expectations across major economies. The S&P 500, FTSE 100, and Nikkei all reached historic highs, driven by robust corporate earnings and positive employment data. Technology stocks led the surge, with AI and clean energy companies showing particularly strong performance. Consumer confidence has reached its highest level since before the pandemic, supported by wage growth and technological innovations that are creating new job opportunities across multiple sectors."
+            },
+            {
+                id: 6,
+                title: "Olympic Games Break Viewership Records",
+                summary: "The latest Olympic Games have shattered global viewership records with innovative broadcast technology and compelling athletic performances capturing worldwide attention.",
+                image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&h=400&fit=crop",
+                source: "Sports Network",
+                publishTime: "12 hours ago",
+                readTime: "4 min read",
+                category: "sports",
+                isNew: false,
+                fullContent: "The Tokyo 2024 Olympic Games have achieved unprecedented global viewership, with over 5 billion people tuning in across traditional and digital platforms. The games featured breakthrough performances in multiple sports, with several world records broken and inspiring stories of athletic achievement capturing hearts worldwide. New sports additions and innovative broadcast technologies, including 8K coverage and virtual reality experiences, have attracted younger audiences and set new standards for sports broadcasting. The games have also been praised for their sustainability initiatives and cultural celebrations."
+            },
+            {
+                id: 7,
+                title: "Breakthrough Medical Treatment Shows Promise",
+                summary: "New gene therapy treatment demonstrates remarkable success in clinical trials, offering hope for patients with previously incurable genetic disorders.",
+                image: "", // Empty image to test placeholder
+                source: "Medical Journal",
+                publishTime: "14 hours ago",
+                readTime: "6 min read",
+                category: "science",
+                isNew: true,
+                fullContent: "A revolutionary gene therapy treatment has shown unprecedented success in Phase III clinical trials, offering new hope for patients suffering from rare genetic disorders. The treatment, developed over a decade of research, uses advanced CRISPR technology to correct genetic defects at the cellular level. Initial results show a 95% success rate in treating the targeted condition, with minimal side effects reported. This breakthrough could pave the way for treating hundreds of genetic disorders that were previously considered incurable."
+            }
+        ];
+
+        let currentFilter = 'all';
+        let filteredNews = [...newsData];
+        let moodColorSystem;
+        let readingProgressTracker;
+        let searchSystem;
+        let activityFeedSystem;
+        let weatherSystem;
+        let darkModeSystem;
+        let loadingSystem;
+        let infiniteScrollSystem;
+        let timeMachineSystem;
+
+        // Initialize the dashboard
+        function init() {
+            renderArticles();
+            setupEventListeners();
+            
+            // Initialize advanced systems
+            moodColorSystem = new MoodColorSystem();
+            readingProgressTracker = new ReadingProgressTracker();
+            searchSystem = new SearchSystem();
+            activityFeedSystem = new ActivityFeedSystem();
+            weatherSystem = new WeatherSystem();
+            darkModeSystem = new DarkModeSystem();
+            loadingSystem = new LoadingSystem();
+            infiniteScrollSystem = new InfiniteScrollSystem();
+            timeMachineSystem = new TimeMachineSystem();
+            
+            // Initialize all systems
+            moodColorSystem.init();
+            searchSystem.init();
+            activityFeedSystem.init();
+            weatherSystem.init();
+            darkModeSystem.init();
+            loadingSystem.init();
+            infiniteScrollSystem.init();
+            timeMachineSystem.init();
+            
+            // Analyze initial mood
+            setTimeout(() => {
+                moodColorSystem.analyzeDashboardMood();
+            }, 1000);
+
+            // Welcome message
+            setTimeout(() => {
+                showToast('Welcome to the most advanced news dashboard!', 'Welcome', 'success', 5000);
+            }, 2000);
+        }
+
+        // Render articles in the grid
+        function renderArticles() {
+            const grid = document.getElementById('articlesGrid');
+            grid.innerHTML = '';
+
+            filteredNews.forEach((article, index) => {
+                const articleElement = createArticleCard(article, index);
+                grid.appendChild(articleElement);
+            });
+        }
+
+        // Create individual article card
+        function createArticleCard(article, index) {
+            const card = document.createElement('div');
+            card.className = 'article-card';
+            card.dataset.id = article.id;
+            card.style.setProperty('--index', index);
+
+            // Create image element with error handling
+            const imageHTML = article.image ? 
+                `<img src="${article.image}" alt="${article.title}" class="article-image" 
+                     onerror="this.className='article-image placeholder'; this.removeAttribute('src'); this.removeAttribute('onerror');">` :
+                `<div class="article-image placeholder"></div>`;
+
+            card.innerHTML = `
+                ${article.isNew ? '<div class="new-content-indicator"></div>' : ''}
+                <button class="close-btn">&times;</button>
+                <button class="share-button" onclick="triggerShareAnimation(this, '${article.title}')">📤</button>
+                <div class="share-icons-container">
+                    <div class="share-icon facebook">📘</div>
+                    <div class="share-icon twitter">🐦</div>
+                    <div class="share-icon linkedin">💼</div>
+                    <div class="share-icon whatsapp">📱</div>
+                </div>
+                ${imageHTML}
+                <div class="article-meta">
+                    <span class="article-source">${article.source}</span>
+                    <span>•</span>
+                    <span>${article.publishTime}</span>
+                    <span>•</span>
+                    <span>${article.readTime}</span>
+                </div>
+                <h3 class="article-title">${article.title}</h3>
+                <p class="article-summary">${article.summary}</p>
+                <div class="article-full-content" style="display: none;">
+                    <p>${article.fullContent}</p>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Article card expansion
+            document.addEventListener('click', handleCardClick);
+
+            // Category filters
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', handleFilterClick);
+            });
+
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+            // Close overlay
+            document.getElementById('overlay').addEventListener('click', closeExpandedCard);
+        }
+
+        // Handle article card clicks
+        function handleCardClick(e) {
+            const card = e.target.closest('.article-card');
+            const closeBtn = e.target.closest('.close-btn');
+            
+            if (closeBtn) {
+                closeExpandedCard();
+                return;
+            }
+
+            if (card && !card.classList.contains('expanded')) {
+                expandCard(card);
+            }
+        }
+
+        // Expand article card with ultra-smooth transition animation
+        function expandCard(card) {
+            // Close any previously expanded cards
+            document.querySelectorAll('.article-card.expanded, .article-card.expanding').forEach(expandedCard => {
+                if (expandedCard !== card) {
+                    expandedCard.classList.remove('expanded', 'expanding');
+                }
+            });
+
+            // Get the card's current position and dimensions with high precision
+            const rect = card.getBoundingClientRect();
+            
+            // Store original position with sub-pixel precision
+            card.style.position = 'fixed';
+            card.style.top = rect.top + 'px';
+            card.style.left = rect.left + 'px';
+            card.style.width = rect.width + 'px';
+            card.style.height = rect.height + 'px';
+            card.style.transform = 'translate3d(0, 0, 0)'; // Hardware acceleration
+            
+            // Add expanding class for transition
+            card.classList.add('expanding');
+            
+            // Show overlay with synchronized timing
+            document.getElementById('overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Use double RAF for smoother animation start
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    // Calculate target position with precision
+                    const targetWidth = Math.min(window.innerWidth * 0.8, 800);
+                    const targetHeight = window.innerHeight * 0.8;
+                    const targetLeft = (window.innerWidth - targetWidth) / 2;
+                    const targetTop = (window.innerHeight - targetHeight) / 2;
+                    
+                    // Apply target styles with hardware acceleration
+                    card.style.top = targetTop + 'px';
+                    card.style.left = targetLeft + 'px';
+                    card.style.width = targetWidth + 'px';
+                    card.style.height = targetHeight + 'px';
+                    card.style.transform = 'translate3d(0, 0, 0)';
+                    
+                    // Show full content with staggered timing
+                    setTimeout(() => {
+                        const fullContent = card.querySelector('.article-full-content');
+                        if (fullContent) {
+                            fullContent.style.display = 'block';
+                            fullContent.style.opacity = '0';
+                            fullContent.style.transition = 'opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1)';
+                            
+                            // Staggered content reveal
+                            requestAnimationFrame(() => {
+                                fullContent.style.opacity = '1';
+                            });
+                        }
+                    }, 400);
+                    
+                    // Replace expanding with expanded after transition completes
+                    setTimeout(() => {
+                        card.classList.remove('expanding');
+                        card.classList.add('expanded');
+                        
+                        // Setup reading progress tracking
+                        if (readingProgressTracker) {
+                            readingProgressTracker.setupScrollTracking(card);
+                        }
+                        
+                        // Show toast notification
+                        showToast('Article opened for reading', 'Reading Mode', 'success', 3000);
+                    }, 800);
+                });
+            });
+        }
+
+        // Close expanded card with reverse animation
+        function closeExpandedCard() {
+            const expandedCard = document.querySelector('.article-card.expanded');
+            if (expandedCard) {
+                // Hide full content first with smoother timing
+                const fullContent = expandedCard.querySelector('.article-full-content');
+                if (fullContent) {
+                    fullContent.style.transition = 'opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1)';
+                    fullContent.style.opacity = '0';
+                    setTimeout(() => {
+                        fullContent.style.display = 'none';
+                    }, 300);
+                }
+                
+                // Add expanding class for reverse animation
+                expandedCard.classList.remove('expanded');
+                expandedCard.classList.add('expanding');
+                
+                // Get original card position from the grid
+                const originalCard = document.querySelector(`[data-id="${expandedCard.dataset.id}"]:not(.expanded):not(.expanding)`);
+                let targetRect = { top: 100, left: 100, width: 300, height: 400 }; // fallback
+                
+                if (originalCard) {
+                    // Find the original position in the grid
+                    const gridCards = document.querySelectorAll('.article-card:not(.expanded):not(.expanding)');
+                    const cardId = expandedCard.dataset.id;
+                    let gridIndex = 0;
+                    
+                    gridCards.forEach((card, index) => {
+                        if (card.dataset.id === cardId) {
+                            gridIndex = index;
+                        }
+                    });
+                    
+                    // Calculate approximate grid position
+                    const grid = document.getElementById('articlesGrid');
+                    const gridRect = grid.getBoundingClientRect();
+                    const columns = window.innerWidth > 1280 ? 3 : (window.innerWidth > 960 ? 2 : 1);
+                    const cardWidth = gridRect.width / columns - 24; // 24px gap
+                    const cardHeight = 400; // approximate card height
+                    
+                    const row = Math.floor(gridIndex / columns);
+                    const col = gridIndex % columns;
+                    
+                    targetRect = {
+                        top: gridRect.top + (row * (cardHeight + 24)) + 24,
+                        left: gridRect.left + (col * (cardWidth + 24)) + 24,
+                        width: cardWidth,
+                        height: cardHeight
+                    };
+                }
+                
+                // Animate back to original position with double RAF
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        expandedCard.style.top = targetRect.top + 'px';
+                        expandedCard.style.left = targetRect.left + 'px';
+                        expandedCard.style.width = targetRect.width + 'px';
+                        expandedCard.style.height = targetRect.height + 'px';
+                        expandedCard.style.transform = 'translate3d(0, 0, 0)';
+                        
+                        // Remove overlay with synchronized timing
+                        document.getElementById('overlay').classList.remove('active');
+                        
+                        // After animation completes, reset the card
+                        setTimeout(() => {
+                            expandedCard.classList.remove('expanding');
+                            expandedCard.style.position = '';
+                            expandedCard.style.top = '';
+                            expandedCard.style.left = '';
+                            expandedCard.style.width = '';
+                            expandedCard.style.height = '';
+                            expandedCard.style.transform = '';
+                            
+                            document.body.style.overflow = 'auto';
+                            
+                            // Show success toast
+                            showToast('Article closed', 'Reading Mode', 'info', 2000);
+                        }, 800);
+                    });
+                });
+            } else {
+                // Fallback if no expanded card found
+                document.getElementById('overlay').classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Handle filter clicks with ripple effect
+        async function handleFilterClick(e) {
+            const chip = e.target;
+            const category = chip.dataset.category;
+
+            // Create ripple effect
+            chip.classList.add('ripple');
+            setTimeout(() => {
+                chip.classList.remove('ripple');
+            }, 600);
+
+            // Update active filter
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            currentFilter = category;
+            await filterNews(true); // Show loading skeleton
+        }
+
+        // Dynamic shadow system for article cards
+        function setupDynamicShadows() {
+            document.addEventListener('mousemove', (e) => {
+                const cards = document.querySelectorAll('.article-card:hover');
+                
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const cardCenterX = rect.left + rect.width / 2;
+                    const cardCenterY = rect.top + rect.height / 2;
+                    
+                    // Calculate mouse position relative to card center
+                    const mouseX = (e.clientX - cardCenterX) * 0.1;
+                    const mouseY = (e.clientY - cardCenterY) * 0.1;
+                    
+                    // Apply dynamic shadow
+                    const shadowX = Math.max(-20, Math.min(20, mouseX));
+                    const shadowY = Math.max(-20, Math.min(20, mouseY));
+                    
+                    card.style.setProperty('--dynamic-shadow', 
+                        `${shadowX}px ${shadowY}px 40px rgba(0,0,0,0.3), 0 25px 50px rgba(0,0,0,0.2)`
+                    );
+                });
+            });
+        }
+
+        // Trending topics interactions
+        function setupTrendingTopics() {
+            const trendingTopics = document.querySelectorAll('.trending-topic');
+            
+            trendingTopics.forEach(topic => {
+                topic.addEventListener('click', () => {
+                    const trendValue = topic.dataset.trend;
+                    const searchInput = document.getElementById('searchInput');
+                    searchInput.value = trendValue;
+                    
+                    // Trigger search
+                    filterNews();
+                    
+                    // Add flash effect
+                    topic.style.transform = 'scale(1.3)';
+                    topic.style.background = 'rgba(255, 255, 255, 0.3)';
+                    setTimeout(() => {
+                        topic.style.transform = '';
+                        topic.style.background = '';
+                    }, 300);
+                });
+            });
+        }
+
+        // Filter news based on category and search
+        async function filterNews(showLoading = false) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (showLoading) {
+                showFilteringLoading();
+            }
+            
+            filteredNews = newsData.filter(article => {
+                const matchesCategory = currentFilter === 'all' || article.category === currentFilter;
+                const matchesSearch = searchTerm === '' || 
+                    article.title.toLowerCase().includes(searchTerm) ||
+                    article.summary.toLowerCase().includes(searchTerm) ||
+                    article.source.toLowerCase().includes(searchTerm);
+                
+                return matchesCategory && matchesSearch;
+            });
+
+            if (showLoading) {
+                // Simulate loading delay
+                await new Promise(resolve => setTimeout(resolve, 800));
+                hideFilteringLoading();
+            }
+
+            renderArticles();
+            
+            // Re-analyze mood after filtering
+            if (moodColorSystem) {
+                setTimeout(() => {
+                    moodColorSystem.analyzeDashboardMood();
+                }, 500);
+            }
+        }
+
+        // Show loading state for filtering
+        function showFilteringLoading() {
+            const grid = document.getElementById('articlesGrid');
+            grid.style.opacity = '0.3';
+            grid.style.filter = 'blur(1px)';
+            
+            // Add skeleton overlay
+            const skeletonOverlay = document.createElement('div');
+            skeletonOverlay.id = 'filteringSkeleton';
+            skeletonOverlay.style.position = 'absolute';
+            skeletonOverlay.style.top = '0';
+            skeletonOverlay.style.left = '0';
+            skeletonOverlay.style.right = '0';
+            skeletonOverlay.style.background = 'rgba(255, 255, 255, 0.02)';
+            skeletonOverlay.style.zIndex = '10';
+            skeletonOverlay.style.padding = '0 32px';
+            
+            const skeletonGrid = document.createElement('div');
+            skeletonGrid.className = 'articles-grid';
+            
+            // Add 6 skeleton cards
+            for (let i = 0; i < 6; i++) {
+                const skeletonCard = document.createElement('div');
+                skeletonCard.className = 'skeleton-card';
+                skeletonCard.innerHTML = `
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton-meta-item"></div>
+                        <div class="skeleton-meta-item"></div>
+                        <div class="skeleton-meta-item"></div>
+                    </div>
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text"></div>
+                `;
+                skeletonGrid.appendChild(skeletonCard);
+            }
+            
+            skeletonOverlay.appendChild(skeletonGrid);
+            grid.parentElement.style.position = 'relative';
+            grid.parentElement.appendChild(skeletonOverlay);
+        }
+
+        // Hide loading state for filtering
+        function hideFilteringLoading() {
+            const grid = document.getElementById('articlesGrid');
+            const skeletonOverlay = document.getElementById('filteringSkeleton');
+            
+            grid.style.transition = 'all 0.4s ease';
+            grid.style.opacity = '1';
+            grid.style.filter = 'none';
+            
+            if (skeletonOverlay) {
+                skeletonOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    if (skeletonOverlay.parentElement) {
+                        skeletonOverlay.parentElement.removeChild(skeletonOverlay);
+                    }
+                }, 400);
+            }
+        }
+
+        // Enhanced Search System
+        class SearchSystem {
+            constructor() {
+                this.searchInput = document.getElementById('searchInput');
+                this.searchSuggestions = document.getElementById('searchSuggestions');
+                this.searchOverlay = document.getElementById('searchOverlay');
+                this.dashboard = document.getElementById('dashboard');
+                this.isSearchActive = false;
+                
+                this.suggestions = [
+                    { text: 'Artificial Intelligence', category: 'Technology', icon: '🤖' },
+                    { text: 'Climate Change', category: 'Environment', icon: '🌍' },
+                    { text: 'Cryptocurrency', category: 'Finance', icon: '₿' },
+                    { text: 'Space Exploration', category: 'Science', icon: '🚀' },
+                    { text: 'Olympic Games', category: 'Sports', icon: '🏆' },
+                    { text: 'Quantum Computing', category: 'Technology', icon: '⚛️' },
+                    { text: 'Global Health', category: 'Health', icon: '🏥' },
+                    { text: 'Economic Recovery', category: 'Business', icon: '📈' }
+                ];
+            }
+
+            init() {
+                this.searchInput.addEventListener('focus', () => this.activateSearch());
+                this.searchInput.addEventListener('blur', () => this.deactivateSearch());
+                this.searchInput.addEventListener('input', (e) => this.handleInput(e));
+                this.searchOverlay.addEventListener('click', () => this.deactivateSearch());
+            }
+
+            activateSearch() {
+                this.isSearchActive = true;
+                this.dashboard.classList.add('search-active');
+                this.searchOverlay.classList.add('active');
+                this.showSuggestions();
+            }
+
+            deactivateSearch() {
+                setTimeout(() => {
+                    this.isSearchActive = false;
+                    this.dashboard.classList.remove('search-active');
+                    this.searchOverlay.classList.remove('active');
+                    this.hideSuggestions();
+                }, 150);
+            }
+
+            handleInput(e) {
+                const query = e.target.value.toLowerCase();
+                if (query.length > 0) {
+                    this.filterSuggestions(query);
+                } else {
+                    this.showSuggestions();
+                }
+                filterNews();
+            }
+
+            filterSuggestions(query) {
+                const filtered = this.suggestions.filter(suggestion => 
+                    suggestion.text.toLowerCase().includes(query) ||
+                    suggestion.category.toLowerCase().includes(query)
+                );
+                this.displaySuggestions(filtered);
+            }
+
+            showSuggestions() {
+                this.displaySuggestions(this.suggestions);
+            }
+
+            displaySuggestions(suggestions) {
+                this.searchSuggestions.innerHTML = suggestions.map(suggestion => `
+                    <div class="suggestion-item" onclick="selectSuggestion('${suggestion.text}')">
+                        <span class="suggestion-icon">${suggestion.icon}</span>
+                        <span class="suggestion-text">${suggestion.text}</span>
+                        <span class="suggestion-category">${suggestion.category}</span>
+                    </div>
+                `).join('');
+                
+                this.searchSuggestions.classList.add('visible');
+            }
+
+            hideSuggestions() {
+                this.searchSuggestions.classList.remove('visible');
+            }
+        }
+
+        function selectSuggestion(text) {
+            document.getElementById('searchInput').value = text;
+            filterNews();
+            showToast(`Searching for "${text}"`, 'Search', 'info', 3000);
+        }
+
+        // Live Activity Feed System
+        class ActivityFeedSystem {
+            constructor() {
+                this.activityFeed = document.getElementById('activityFeed');
+                this.activities = [
+                    'New article published about AI breakthrough',
+                    'Breaking: Market surge hits new record',
+                    'Weather alert: Storm approaching coast',
+                    'User commented on climate change article',
+                    'Trending: Space mission launches successfully',
+                    'Alert: Cryptocurrency prices volatile',
+                    'Update: Olympic games schedule changed',
+                    'Science: Quantum computing milestone reached'
+                ];
+                this.currentActivityIndex = 0;
+            }
+
+            init() {
+                this.startActivityFeed();
+            }
+
+            startActivityFeed() {
+                setInterval(() => {
+                    this.addActivity();
+                }, 5000);
+                
+                // Add initial activities
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => this.addActivity(), i * 1000);
+                }
+            }
+
+            addActivity() {
+                const activity = this.activities[this.currentActivityIndex % this.activities.length];
+                this.currentActivityIndex++;
+
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.style.opacity = '0';
+                activityItem.style.transform = 'translateY(-20px)';
+                activityItem.innerHTML = `
+                    <div class="activity-time">${timeStr}</div>
+                    <div class="activity-text activity-text-animated" id="activity-${this.currentActivityIndex}">${activity}</div>
+                `;
+
+                this.activityFeed.insertBefore(activityItem, this.activityFeed.firstChild);
+
+                // Animate in the activity item
+                setTimeout(() => {
+                    activityItem.style.transition = 'all 0.6s ease-out';
+                    activityItem.style.opacity = '1';
+                    activityItem.style.transform = 'translateY(0)';
+                }, 100);
+
+                // Animate in the text
+                setTimeout(() => {
+                    const textElement = document.getElementById(`activity-${this.currentActivityIndex}`);
+                    if (textElement) {
+                        textElement.classList.add('visible');
+                    }
+                }, 300);
+
+                // Remove old activities (keep only latest 5)
+                while (this.activityFeed.children.length > 5) {
+                    this.activityFeed.removeChild(this.activityFeed.lastChild);
+                }
+            }
+
+
+        }
+
+        // Weather Animation System
+        class WeatherSystem {
+            constructor() {
+                this.weatherWidget = document.getElementById('weatherWidget');
+                this.weatherAnimation = document.getElementById('weatherAnimation');
+                this.weatherIcon = document.getElementById('weatherIcon');
+                this.weatherTemp = document.getElementById('weatherTemp');
+                this.currentWeather = 'sunny';
+                this.weatherTypes = ['sunny', 'rainy', 'cloudy'];
+            }
+
+            init() {
+                this.startWeatherCycle();
+                this.updateWeather();
+            }
+
+            startWeatherCycle() {
+                setInterval(() => {
+                    this.changeWeather();
+                }, 15000);
+            }
+
+            changeWeather() {
+                const previousWeather = this.currentWeather;
+                do {
+                    this.currentWeather = this.weatherTypes[Math.floor(Math.random() * this.weatherTypes.length)];
+                } while (this.currentWeather === previousWeather);
+                
+                this.updateWeather();
+            }
+
+            updateWeather() {
+                this.clearAnimations();
+                
+                switch (this.currentWeather) {
+                    case 'sunny':
+                        this.createSunnyWeather();
+                        this.weatherTemp.textContent = '25°C';
+                        break;
+                    case 'rainy':
+                        this.createRainyWeather();
+                        this.weatherTemp.textContent = '18°C';
+                        break;
+                    case 'cloudy':
+                        this.createCloudyWeather();
+                        this.weatherTemp.textContent = '22°C';
+                        break;
+                }
+            }
+
+            createSunnyWeather() {
+                this.weatherIcon.className = 'sun-icon';
+            }
+
+            createRainyWeather() {
+                this.weatherIcon.style.display = 'none';
+                
+                // Create raindrops
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        const raindrop = document.createElement('div');
+                        raindrop.className = 'raindrop';
+                        raindrop.style.left = Math.random() * 100 + '%';
+                        raindrop.style.animationDelay = Math.random() * 2 + 's';
+                        raindrop.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
+                        this.weatherAnimation.appendChild(raindrop);
+
+                        // Remove raindrop after animation
+                        setTimeout(() => {
+                            if (raindrop.parentNode) {
+                                raindrop.parentNode.removeChild(raindrop);
+                            }
+                        }, 2000);
+                    }, i * 100);
+                }
+            }
+
+            createCloudyWeather() {
+                this.weatherIcon.style.display = 'none';
+                
+                // Create clouds
+                for (let i = 0; i < 3; i++) {
+                    const cloud = document.createElement('div');
+                    cloud.className = 'cloud small';
+                    cloud.style.top = (20 + i * 15) + '%';
+                    cloud.style.animationDelay = i * 2 + 's';
+                    this.weatherAnimation.appendChild(cloud);
+                }
+            }
+
+            clearAnimations() {
+                this.weatherAnimation.innerHTML = '';
+                this.weatherIcon.style.display = 'block';
+                this.weatherIcon.className = '';
+            }
+        }
+
+        // Share Animation System
+        function triggerShareAnimation(shareButton, articleTitle) {
+            const container = shareButton.nextElementSibling;
+            
+            // Add burst animation
+            container.classList.add('burst');
+            
+            // Show toast notification
+            showToast(`Sharing "${articleTitle.substring(0, 30)}..."`, 'Article Shared', 'success', 3000);
+            
+            // Remove animation class after completion
+            setTimeout(() => {
+                container.classList.remove('burst');
+            }, 2000);
+        }
+
+        // Dark Mode System
+        class DarkModeSystem {
+            constructor() {
+                this.darkModeToggle = document.getElementById('darkModeToggle');
+                this.body = document.body;
+                this.isDarkMode = localStorage.getItem('darkMode') === 'true';
+            }
+
+            init() {
+                // Apply saved theme
+                if (this.isDarkMode) {
+                    this.enableDarkMode(false);
+                }
+
+                // Add toggle event listener
+                this.darkModeToggle.addEventListener('click', () => {
+                    this.toggleDarkMode();
+                });
+            }
+
+            toggleDarkMode() {
+                this.isDarkMode = !this.isDarkMode;
+                
+                if (this.isDarkMode) {
+                    this.enableDarkMode(true);
+                } else {
+                    this.disableDarkMode(true);
+                }
+
+                // Save preference
+                localStorage.setItem('darkMode', this.isDarkMode);
+            }
+
+            enableDarkMode(animate = true) {
+                if (animate) {
+                    this.body.classList.add('day-night-transition');
+                    setTimeout(() => {
+                        this.body.classList.remove('day-night-transition');
+                    }, 2000);
+                }
+
+                this.body.classList.add('dark-mode');
+                showToast('Dark mode enabled 🌙', 'Theme Changed', 'info', 3000);
+            }
+
+            disableDarkMode(animate = true) {
+                if (animate) {
+                    this.body.classList.add('day-night-transition');
+                    setTimeout(() => {
+                        this.body.classList.remove('day-night-transition');
+                    }, 2000);
+                }
+
+                this.body.classList.remove('dark-mode');
+                showToast('Light mode enabled ☀️', 'Theme Changed', 'info', 3000);
+            }
+        }
+
+        // Infinite Scroll System
+        class InfiniteScrollSystem {
+            constructor() {
+                this.loadingIndicator = document.getElementById('scrollLoadingIndicator');
+                this.isLoading = false;
+                this.hasMoreContent = true;
+                this.currentPage = 1;
+                this.loadingThreshold = 500; // pixels from bottom
+            }
+
+            init() {
+                this.setupScrollListener();
+                this.updateIndicatorPosition();
+            }
+
+            setupScrollListener() {
+                let scrollTimer = null;
+                
+                window.addEventListener('scroll', () => {
+                    // Clear previous timer
+                    if (scrollTimer) {
+                        clearTimeout(scrollTimer);
+                    }
+
+                    // Show indicator
+                    if (this.shouldShowIndicator()) {
+                        this.showLoadingIndicator();
+                    }
+
+                    // Check if we need to load more content
+                    if (this.shouldLoadMore() && !this.isLoading && this.hasMoreContent) {
+                        this.loadMoreContent();
+                    }
+
+                    // Hide indicator after scrolling stops
+                    scrollTimer = setTimeout(() => {
+                        this.hideLoadingIndicator();
+                    }, 1000);
+                });
+
+                // Update indicator position on scroll
+                window.addEventListener('scroll', () => {
+                    this.updateIndicatorPosition();
+                });
+            }
+
+            shouldShowIndicator() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                
+                return (documentHeight - scrollTop - windowHeight) < this.loadingThreshold;
+            }
+
+            shouldLoadMore() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                
+                return (documentHeight - scrollTop - windowHeight) < 200;
+            }
+
+            updateIndicatorPosition() {
+                const scrollProgress = (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+                const topPosition = Math.max(100, Math.min(window.innerHeight - 200, window.innerHeight * 0.3 + (scrollProgress * 3)));
+                
+                this.loadingIndicator.style.top = topPosition + 'px';
+            }
+
+            showLoadingIndicator() {
+                this.loadingIndicator.classList.add('visible');
+            }
+
+            hideLoadingIndicator() {
+                if (!this.isLoading) {
+                    this.loadingIndicator.classList.remove('visible');
+                }
+            }
+
+            async loadMoreContent() {
+                if (this.isLoading) return;
+
+                this.isLoading = true;
+                this.showLoadingIndicator();
+
+                // Show skeleton screens for new content
+                this.appendSkeletonCards(3);
+
+                // Simulate loading delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Remove skeleton cards
+                this.removeSkeletonCards();
+
+                // Generate more articles
+                const newArticles = this.generateMoreArticles();
+                this.appendArticlesToGrid(newArticles);
+
+                this.currentPage++;
+                this.isLoading = false;
+
+                // Show success toast
+                showToast(`Loaded ${newArticles.length} more articles`, 'Content Loaded', 'success', 3000);
+
+                // Hide indicator
+                setTimeout(() => {
+                    this.hideLoadingIndicator();
+                }, 500);
+
+                // Check if we should stop loading more (simulate finite content)
+                if (this.currentPage > 5) {
+                    this.hasMoreContent = false;
+                    showToast('All articles loaded', 'End of Content', 'info', 3000);
+                }
+            }
+
+            appendSkeletonCards(count) {
+                const grid = document.getElementById('articlesGrid');
+                
+                for (let i = 0; i < count; i++) {
+                    const skeletonCard = document.createElement('div');
+                    skeletonCard.className = 'skeleton-card skeleton-loading';
+                    skeletonCard.innerHTML = `
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-meta">
+                            <div class="skeleton-meta-item"></div>
+                            <div class="skeleton-meta-item"></div>
+                            <div class="skeleton-meta-item"></div>
+                        </div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text"></div>
+                    `;
+                    
+                    skeletonCard.style.opacity = '0';
+                    skeletonCard.style.transform = 'translateY(30px)';
+                    grid.appendChild(skeletonCard);
+
+                    // Animate in
+                    setTimeout(() => {
+                        skeletonCard.style.transition = 'all 0.4s ease';
+                        skeletonCard.style.opacity = '1';
+                        skeletonCard.style.transform = 'translateY(0)';
+                    }, i * 100);
+                }
+            }
+
+            removeSkeletonCards() {
+                const skeletonCards = document.querySelectorAll('.skeleton-loading');
+                skeletonCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(-20px)';
+                        
+                        setTimeout(() => {
+                            if (card.parentElement) {
+                                card.parentElement.removeChild(card);
+                            }
+                        }, 300);
+                    }, index * 50);
+                });
+            }
+
+            generateMoreArticles() {
+                const templateArticles = [
+                    {
+                        title: "Advanced Quantum Neural Networks Revolutionize Computing",
+                        summary: "Scientists achieve breakthrough in quantum-classical hybrid systems that could transform artificial intelligence.",
+                        source: "Future Tech",
+                        category: "technology",
+                        image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=400&fit=crop"
+                    },
+                    {
+                        title: "Global Renewable Energy Initiative Reaches 80% Milestone",
+                        summary: "International collaboration succeeds in transitioning majority of power grid to sustainable sources.",
+                        source: "Green World",
+                        category: "science",
+                        image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=600&h=400&fit=crop"
+                    },
+                    {
+                        title: "Mars Colony Expansion Project Approved for 2030",
+                        summary: "Space agencies announce ambitious plan to establish permanent human settlement on Mars.",
+                        source: "Space News",
+                        category: "science",
+                        image: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=600&h=400&fit=crop"
+                    }
+                ];
+
+                return templateArticles.map((template, index) => ({
+                    ...template,
+                    id: Date.now() + index,
+                    publishTime: `${Math.floor(Math.random() * 12) + 1} hours ago`,
+                    readTime: `${Math.floor(Math.random() * 5) + 3} min read`,
+                    isNew: Math.random() > 0.7,
+                    fullContent: `This is expanded content for ${template.title}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.`
+                }));
+            }
+
+            appendArticlesToGrid(articles) {
+                const grid = document.getElementById('articlesGrid');
+                const currentCount = grid.children.length;
+
+                articles.forEach((article, index) => {
+                    const articleElement = createArticleCard(article, currentCount + index);
+                    articleElement.style.opacity = '0';
+                    articleElement.style.transform = 'translateY(50px)';
+                    grid.appendChild(articleElement);
+
+                    // Animate in
+                    setTimeout(() => {
+                        articleElement.style.transition = 'all 0.6s ease';
+                        articleElement.style.opacity = '1';
+                        articleElement.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }
+        }
+
+        // Time Machine System
+        class TimeMachineSystem {
+            constructor() {
+                this.timeMachineContainer = document.getElementById('timeMachineContainer');
+                this.timelineSlider = document.getElementById('timelineSlider');
+                this.body = document.body;
+                this.currentTimePeriod = 'modern';
+                this.isExpanded = false;
+                
+                this.timePeriods = {
+                    0: { name: 'vintage', class: 'time-vintage', era: '1950s' },
+                    25: { name: 'retro', class: 'time-retro', era: '1980s' },
+                    75: { name: 'modern', class: 'time-modern', era: 'Today' },
+                    100: { name: 'futuristic', class: 'time-futuristic', era: '2050s' }
+                };
+            }
+
+            init() {
+                this.setupTimelineControls();
+                this.setupToggleControls();
+                this.setTimePeriod(75); // Start at modern
+            }
+
+            setupToggleControls() {
+                this.timeMachineContainer.addEventListener('click', (e) => {
+                    // Don't toggle if clicking on slider or content when expanded
+                    if (this.isExpanded && (e.target === this.timelineSlider || e.target.closest('.timeline-container'))) {
+                        return;
+                    }
+                    this.toggleTimeMachine();
+                });
+            }
+
+            toggleTimeMachine() {
+                this.isExpanded = !this.isExpanded;
+                
+                if (this.isExpanded) {
+                    this.timeMachineContainer.classList.remove('collapsed');
+                    this.timeMachineContainer.classList.add('expanded');
+                    showToast('Time Machine activated! 🚀', 'Time Travel', 'info', 3000);
+                } else {
+                    this.timeMachineContainer.classList.remove('expanded');
+                    this.timeMachineContainer.classList.add('collapsed');
+                }
+            }
+
+            setupTimelineControls() {
+                this.timelineSlider.addEventListener('input', (e) => {
+                    this.setTimePeriod(parseInt(e.target.value));
+                });
+
+                this.timelineSlider.addEventListener('change', (e) => {
+                    const value = parseInt(e.target.value);
+                    this.snapToClosestPeriod(value);
+                });
+            }
+
+            snapToClosestPeriod(value) {
+                const periods = Object.keys(this.timePeriods).map(k => parseInt(k));
+                const closest = periods.reduce((prev, curr) => 
+                    Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+                );
+                
+                this.timelineSlider.value = closest;
+                this.setTimePeriod(closest);
+            }
+
+            async setTimePeriod(value) {
+                // Find the appropriate time period
+                let selectedPeriod = null;
+                const periods = Object.keys(this.timePeriods).map(k => parseInt(k)).sort((a, b) => a - b);
+                
+                for (let i = 0; i < periods.length; i++) {
+                    if (value <= periods[i] || i === periods.length - 1) {
+                        selectedPeriod = this.timePeriods[periods[i]];
+                        break;
+                    }
+                }
+
+                if (!selectedPeriod || selectedPeriod.name === this.currentTimePeriod) return;
+
+                // Show time travel loading effect
+                this.showTimeTransitionLoading();
+
+                // Simulate time travel delay
+                await new Promise(resolve => setTimeout(resolve, 1200));
+
+                // Remove previous time period classes
+                Object.values(this.timePeriods).forEach(period => {
+                    this.body.classList.remove(period.class);
+                });
+
+                // Apply new time period
+                this.body.classList.add(selectedPeriod.class);
+                this.currentTimePeriod = selectedPeriod.name;
+
+                // Hide loading effect
+                this.hideTimeTransitionLoading();
+
+                // Show notification
+                this.showTimePeriodNotification(selectedPeriod);
+
+                // Update interface elements for the time period
+                this.updateInterfaceForTimePeriod(selectedPeriod);
+            }
+
+            showTimeTransitionLoading() {
+                const grid = document.getElementById('articlesGrid');
+                grid.style.transition = 'all 0.6s ease';
+                grid.style.opacity = '0.2';
+                grid.style.transform = 'scale(0.98)';
+                grid.style.filter = 'blur(2px)';
+
+                // Add time travel overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'timeTransitionOverlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(45deg, rgba(74, 144, 226, 0.1), rgba(118, 75, 162, 0.1));
+                    backdrop-filter: blur(5px);
+                    z-index: 500;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 4rem;
+                    animation: timeWarp 1.2s ease-in-out;
+                `;
+                overlay.innerHTML = '<div style="animation: spin 1s linear infinite;">⏰</div>';
+                document.body.appendChild(overlay);
+            }
+
+            hideTimeTransitionLoading() {
+                const grid = document.getElementById('articlesGrid');
+                const overlay = document.getElementById('timeTransitionOverlay');
+                
+                grid.style.opacity = '1';
+                grid.style.transform = 'scale(1)';
+                grid.style.filter = 'none';
+
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        if (overlay.parentElement) {
+                            overlay.parentElement.removeChild(overlay);
+                        }
+                    }, 300);
+                }
+            }
+
+            showTimePeriodNotification(period) {
+                const messages = {
+                    vintage: `Traveled to the ${period.era} 📻`,
+                    retro: `Entered the ${period.era} 📼`,
+                    modern: `Back to ${period.era} 💻`,
+                    futuristic: `Welcome to the ${period.era} 🚀`
+                };
+
+                showToast(messages[period.name], 'Time Travel', 'info', 4000);
+            }
+
+            updateInterfaceForTimePeriod(period) {
+                // Update particle system colors if needed
+                if (period.name === 'futuristic') {
+                    // Add neon particle effects
+                    this.addNeonEffects();
+                } else if (period.name === 'vintage') {
+                    // Add vintage paper texture effects
+                    this.addVintageEffects();
+                } else {
+                    this.removeSpecialEffects();
+                }
+            }
+
+            addNeonEffects() {
+                // Add temporary neon glow to various elements
+                const glowElements = document.querySelectorAll('.filter-chip, .search-bar, .article-card');
+                glowElements.forEach(el => {
+                    el.style.transition = 'all 1s ease';
+                });
+            }
+
+            addVintageEffects() {
+                // Add vintage styling
+                const elements = document.querySelectorAll('.article-card, .filter-chip');
+                elements.forEach(el => {
+                    el.style.transition = 'all 1s ease';
+                });
+            }
+
+            removeSpecialEffects() {
+                // Reset to default styling
+                const elements = document.querySelectorAll('.filter-chip, .search-bar, .article-card');
+                elements.forEach(el => {
+                    el.style.transition = 'all 0.3s ease';
+                });
+            }
+        }
+
+        // Loading System with Skeleton Screens
+        class LoadingSystem {
+            constructor() {
+                this.loadingContainer = document.getElementById('loadingContainer');
+                this.mainContent = document.querySelector('.main-content');
+                this.isLoading = false;
+            }
+
+            init() {
+                // Show loading initially
+                this.showLoading();
+                
+                // Hide after content is ready
+                setTimeout(() => {
+                    this.hideLoading();
+                }, 2000);
+            }
+
+            showLoading() {
+                if (this.isLoading) return;
+                
+                this.isLoading = true;
+                this.loadingContainer.classList.add('visible');
+                if (this.mainContent) {
+                    this.mainContent.style.opacity = '0';
+                }
+            }
+
+            hideLoading() {
+                if (!this.isLoading) return;
+                
+                this.isLoading = false;
+                this.loadingContainer.classList.remove('visible');
+                if (this.mainContent) {
+                    this.mainContent.style.opacity = '1';
+                }
+            }
+
+            simulateLoading() {
+                this.showLoading();
+                
+                // Simulate loading time
+                setTimeout(() => {
+                    this.hideLoading();
+                    showToast('Content loaded successfully!', 'Loading Complete', 'success', 3000);
+                }, 1500);
+            }
+        }
+
+        // Handle search input
+        async function handleSearch(e) {
+            const searchTerm = e.target.value.trim();
+            
+            // Show skeleton loading for substantial searches
+            if (searchTerm.length > 2) {
+                await filterNews(true);
+            } else {
+                filterNews(false);
+            }
+        }
+
+        // Initialize spectacular dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize particle system
+            const canvas = document.getElementById('particleCanvas');
+            const particleSystem = new ParticleSystem(canvas);
+
+            // Initialize breaking news animation
+            animateBreakingNews();
+
+            // Initialize city marker animations
+            animateCityMarkers();
+
+            // Setup dynamic shadows
+            setupDynamicShadows();
+
+            // Setup trending topics interactions
+            setupTrendingTopics();
+
+            // Add transition classes dynamically
+            const elements = document.querySelectorAll('.filter-chip, .article-card, .search-bar');
+            elements.forEach(el => {
+                el.style.transition = 'all 0.3s ease';
+            });
+
+            // Initialize the dashboard
+            init();
+
+            // Enhanced real-time updates with spectacular effects
+            setInterval(() => {
+                // Randomly add new content indicators with enhanced effects
+                const cards = document.querySelectorAll('.article-card:not(.expanded)');
+                if (cards.length > 0 && Math.random() < 0.15) {
+                    const randomCard = cards[Math.floor(Math.random() * cards.length)];
+                    if (!randomCard.querySelector('.new-content-indicator')) {
+                        const indicator = document.createElement('div');
+                        indicator.className = 'new-content-indicator';
+                        randomCard.appendChild(indicator);
+                        
+                        // Add spectacular entrance effect
+                        indicator.style.transform = 'scale(0)';
+                        indicator.style.animation = 'newsPopIn 0.6s ease-out forwards';
+                    }
+                }
+
+                // Update breaking news ticker with new content
+                if (Math.random() < 0.3) {
+                    const breakingNews = [
+                        '🚨 ALERT: Cryptocurrency reaches all-time high',
+                        '⚡ LIVE: Tech conference reveals revolutionary AI',
+                        '🌍 UPDATE: International climate agreement signed',
+                        '📈 MARKET: Stock indices soar to record levels',
+                        '🔬 SCIENCE: Breakthrough in quantum computing',
+                        '🏆 SPORTS: Olympic records shattered in Tokyo'
+                    ];
+                    
+                    const randomNews = breakingNews[Math.floor(Math.random() * breakingNews.length)];
+                    const breakingElement = document.getElementById('breakingNewsText');
+                    
+                    // Add smooth transition effect
+                    breakingElement.style.opacity = '0.5';
+                    setTimeout(() => {
+                        breakingElement.textContent = randomNews + ' • ' + breakingElement.textContent.split(' • ').slice(1).join(' • ');
+                        animateBreakingNews();
+                        breakingElement.style.opacity = '1';
+                        
+                        // Show breaking news toast
+                        showToast(randomNews, 'Breaking News', 'warning', 6000);
+                    }, 300);
+                }
+            }, 8000);
+
+            // Add spectacular mouse interaction effects
+            document.addEventListener('mousemove', (e) => {
+                // Create trailing effect on hero section
+                const hero = document.querySelector('.hero-section');
+                if (hero) {
+                    const rect = hero.getBoundingClientRect();
+                    if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                        const x = ((e.clientX - rect.left) / rect.width) * 100;
+                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        
+                        // Get current primary color from CSS variables
+                        const primaryHue = getComputedStyle(document.documentElement).getPropertyValue('--primary-hue').trim();
+                        const hue = parseInt(primaryHue);
+                        
+                        hero.style.background = `
+                            radial-gradient(circle at ${x}% ${y}%, hsla(${hue}, 50%, 60%, 0.3) 0%, transparent 50%),
+                            url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI1MDAiIHZpZXdCb3g9IjAgMCAxMDAwIDUwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAgMGgxMDAwdjUwMEgweiIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjAzKSIvPgo8cGF0aCBkPSJNMTAwIDEwMGMzMCAwIDEwMCAwIDIwMCAyMHMxNTAgMTAgMjAwIDBzMTAwLTEwIDIwMCAwczEwMCAyMCAyMDAgMTB2MzBjLTMwIDAtMTAwIDAtMjAwLTIwcy0xNTAtMTAtMjAwIDBzLTEwMCAxMC0yMDAgMHMtMTAwLTIwLTIwMC0xMHYtMzB6IiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDUpIi8+CjxwYXRoIGQ9Ik0yMDAgMjAwYzUwIDAgMTUwIDEwIDI1MCAyMHMxMDAgMTAgMjAwIDBzMTUwLTEwIDI1MCAyMHMxMDAgMCAyMDAgMTB2NDBjLTUwIDAtMTUwLTEwLTI1MC0yMHMtMTAwLTEwLTIwMCAwcy0xNTAgMTAtMjUwLTIwcy0xMDAgMC0yMDAtMTB2LTQweiIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KSIvPgo8cGF0aCBkPSJNMTAwIDMwMGM0MCA1IDEyMCAxNSAyMjAgMjVzMTIwIDUgMjIwIDBzMTIwLTE1IDIyMC0yNXMxMjAtNSAyMjAgMTB2NTBjLTQwLTUtMTIwLTE1LTIyMC0yNXMtMTIwLTUtMjIwIDBzLTEyMCAxNS0yMjAgMjVzLTEyMCA1LTIyMC0xMHYtNTB6IiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDYpIi8+Cjwvc3ZnPg==') center/cover,
+                            var(--hero-gradient)
+                        `;
+                    }
+                }
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeExpandedCard();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Task Dashboard</title>
+    <style>
+        :root {
+            --primary: #667EEA;
+            --secondary: #764BA2;
+            --accent: #F093FB;
+            --background: #F8FAFC;
+            --background-secondary: #bedbf8;
+            --text: #2D3748;
+            --success: #48BB78;
+            --warning: #ED8936;
+            --error: #F56565;
+            --high-urgency: #FF4757;
+            --medium-urgency: #FFA726;
+            --low-urgency: #66BB6A;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.15);
+            
+            /* Premium Animation Variables */
+            --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --ease-elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            
+            /* Glassmorphism Variables */
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Particle Canvas */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s var(--ease-smooth);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.3s var(--ease-smooth);
+            z-index: -1;
+        }
+
+        .header:hover::before {
+            opacity: 0.05;
+        }
+
+        .logo {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--background-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .voice-status {
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            min-width: 200px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+        }
+
+        .voice-status.idle { 
+            background: linear-gradient(135deg, var(--secondary), var(--accent)); 
+            color: white; 
+        }
+        .voice-status.listening { 
+            background: var(--success); 
+            color: white; 
+            animation: pulse-glow 1.5s infinite;
+        }
+        .voice-status.processing { 
+            background: var(--warning); 
+            color: white;
+            animation: pulse-glow 1s infinite;
+        }
+        .voice-status.error { 
+            background: var(--error); 
+            color: white;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: var(--card-shadow); }
+            50% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+        }
+
+        /* Dashboard */
+        .dashboard {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-task-btn {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .add-task-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        /* Microphone Button */
+        .mic-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mic-container[data-tooltip]:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            background: var(--text);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+
+        .mic-container[data-tooltip]:hover::after {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--text) transparent transparent transparent;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+
+        .mic-button {
+            width: clamp(70px, 15vw, 100px);
+            height: clamp(70px, 15vw, 100px);
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s var(--ease-spring);
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(240, 147, 251, 0.4);
+        }
+
+        .mic-button.listening {
+            animation: voiceRipple 1.5s infinite, rotate 8s linear infinite;
+        }
+
+        .mic-button.processing {
+            animation: spinGradient 2s linear infinite;
+        }
+
+        .mic-button.success {
+            animation: celebrationBurst 0.6s var(--ease-bounce);
+        }
+
+        .mic-button.error {
+            animation: errorShake 0.5s var(--ease-bounce);
+        }
+
+        .mic-button svg {
+            width: 40%;
+            height: 40%;
+            fill: white;
+            transition: all 0.3s var(--ease-smooth);
+        }
+
+        .mic-button:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Premium Microphone Animations */
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        @keyframes voiceRipple {
+            0% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0.8), 0 0 0 0 rgba(102, 126, 234, 0.6); }
+            50% { box-shadow: 0 0 0 20px rgba(240, 147, 251, 0.3), 0 0 0 35px rgba(102, 126, 234, 0.2); }
+            100% { box-shadow: 0 0 0 40px rgba(240, 147, 251, 0), 0 0 0 55px rgba(102, 126, 234, 0); }
+        }
+
+        @keyframes spinGradient {
+            0% { background: linear-gradient(0deg, var(--accent), var(--primary)); }
+            25% { background: linear-gradient(90deg, var(--accent), var(--primary)); }
+            50% { background: linear-gradient(180deg, var(--accent), var(--primary)); }
+            75% { background: linear-gradient(270deg, var(--accent), var(--primary)); }
+            100% { background: linear-gradient(360deg, var(--accent), var(--primary)); }
+        }
+
+        @keyframes celebrationBurst {
+            0% { transform: scale(1); background: linear-gradient(135deg, var(--accent), var(--primary)); }
+            50% { transform: scale(1.2); background: linear-gradient(135deg, var(--success), #4ade80); }
+            100% { transform: scale(1); background: linear-gradient(135deg, var(--accent), var(--primary)); }
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0) scale(1); }
+            25% { transform: translateX(-8px) scale(0.98); }
+            75% { transform: translateX(8px) scale(0.98); }
+        }
+
+        /* Columns */
+        .columns {
+            display: flex;
+            gap: 1.5rem;
+            flex: 1;
+            min-height: 400px;
+        }
+
+        .column {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+        }
+
+        .column-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .column-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-count {
+            font-size: 0.9rem;
+            color: #64748B;
+            font-weight: 500;
+        }
+
+        .tasks {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 200px;
+            padding: 0.5rem;
+            border-radius: 12px;
+            transition: background-color 0.3s ease;
+        }
+
+        .tasks.drag-over {
+            background-color: rgba(102, 126, 234, 0.1);
+            border: 2px dashed var(--primary);
+        }
+
+        /* Premium Task Cards */
+        .task {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--glass-shadow);
+            cursor: grab;
+            transition: all 0.4s var(--ease-spring);
+            border-left: 4px solid;
+            position: relative;
+        }
+
+        .task::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            opacity: 0;
+            transition: opacity 0.3s var(--ease-smooth);
+            pointer-events: none;
+        }
+
+        .task:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .task:hover::before {
+            opacity: 1;
+        }
+
+        .task.dragging {
+            opacity: 0.8;
+            transform: rotate(8deg) scale(1.05);
+            cursor: grabbing;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .task.completing {
+            animation: taskComplete 0.8s var(--ease-bounce);
+        }
+
+        .task.deleting {
+            animation: taskDelete 0.5s var(--ease-spring);
+        }
+
+        .task.dropdown-active {
+            z-index: 100;
+        }
+
+        .task.high { border-left-color: var(--high-urgency); }
+        .task.medium { border-left-color: var(--medium-urgency); }
+        .task.low { border-left-color: var(--low-urgency); }
+
+        .task-content {
+            margin-bottom: 1rem;
+            position: relative;
+            padding-right: 3rem; /* Space for floating number badge */
+        }
+
+        /* Task ID Badge Container */
+        .task-id-badge {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+            backdrop-filter: blur(2px);
+            font-size: 9px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(-50%) scale(0) rotate(-180deg);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 5;
+        }
+
+        .task-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* Editable Task Title Input */
+        .task-title-input {
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.4;
+            border: 2px solid transparent;
+            background: transparent;
+            outline: none;
+            width: 100%;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s var(--ease-smooth);
+            cursor: text;
+            font-family: inherit;
+            color: inherit;
+            margin: -0.25rem -0.5rem 0.25rem -0.5rem;
+        }
+
+        .task-title-input:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .task-title-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            cursor: text;
+        }
+
+        .task-title-input.editing {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .urgency-tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .urgency-tag.high { background: var(--high-urgency); }
+        .urgency-tag.medium { background: var(--medium-urgency); }
+        .urgency-tag.low { background: var(--low-urgency); }
+
+        .priority-container {
+            display: inline-block;
+        }
+
+        .urgency-tag {
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .urgency-tag:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Priority Dropdown */
+        .priority-dropdown {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid #E2E8F0;
+            z-index: 1001;
+            padding: 0.25rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: all 0.3s var(--ease-smooth);
+            visibility: hidden;
+        }
+
+        .priority-dropdown.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+            visibility: visible;
+        }
+
+        .priority-option {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+            margin: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .priority-option.high { 
+            background: var(--high-urgency); 
+        }
+
+        .priority-option.medium { 
+            background: var(--medium-urgency); 
+        }
+
+        .priority-option.low { 
+            background: var(--low-urgency); 
+        }
+
+        .priority-option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .priority-option.current {
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.5);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .task-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .task-action:hover {
+            background: #F1F5F9;
+            transform: scale(1.1);
+        }
+
+        .task-action.delete:hover { background: rgba(245, 101, 101, 0.1); color: var(--error); }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #E2E8F0;
+            color: var(--text);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        /* Voice Commands Help */
+        .voice-help {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .voice-commands {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .voice-command {
+            background: #F8FAFC;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .columns {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .column {
+                min-height: auto;
+            }
+
+            .tasks {
+                min-height: auto;
+                max-height: 500px;
+                overflow-y: auto;
+                padding: 0.5rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .task-meta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .voice-commands {
+                grid-template-columns: 1fr;
+            }
+
+            /* Mobile-specific Task Layout Overrides */
+            .task {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.75rem;
+            }
+
+            /* Disable hover zoom on mobile for better touch experience */
+            .task:hover {
+                transform: none;
+                box-shadow: var(--glass-shadow); /* Revert to non-hover shadow */
+            }
+
+            .task-content {
+                display: contents; /* Core trick to rearrange children */
+            }
+
+            /* Hide desktop elements on mobile */
+            .task .task-id-badge,
+            .task .priority-dropdown {
+                display: none !important;
+            }
+
+            /* 1. Task Title Input - First */
+            .task-title-input {
+                order: 1;
+                flex: 1; /* Allow it to grow */
+                min-width: 0; /* Crucial for text-overflow in flexbox */
+                text-overflow: ellipsis;
+                border: none !important;
+                background: transparent !important;
+                padding: 0.25rem 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                cursor: text;
+            }
+
+            /* 2. Actions Container - Priority + Delete */
+            .task-meta {
+                flex-direction: row;
+                order: 2;
+                display: flex !important;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+
+            /* 2a. Priority Emoji */
+            .priority-container {
+                order: 1;
+                position: relative; /* For dropdown positioning */
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .urgency-tag {
+                /* align-self: center; */
+                background: none !important;
+                color: transparent;
+                width: auto;
+                height: auto;
+                border-radius: 0;
+                cursor: pointer; /* Make it clickable */
+                box-shadow: none;
+                flex-shrink: 0;
+                border: none;
+                padding: 0;
+                font-size: 16px;
+                /* position: relative; */
+            }
+
+            .urgency-tag.high::after {
+                content: "🔴";
+                color: initial;
+            }
+
+            .urgency-tag.medium::after {
+                content: "🟡";
+                color: initial;
+            }
+
+            .urgency-tag.low::after {
+                content: "🟢";
+                color: initial;
+            }
+
+            .urgency-tag:hover {
+                transform: scale(1.1);
+                box-shadow: none;
+            }
+
+            /* 2c. Delete Icon */
+            .task-actions {
+                order: 3;
+                display: flex;
+                align-items: center;
+            }
+
+            .task-action.delete {
+                font-size: 1.1rem;
+                padding: 0.25rem;
+            }
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            max-width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease;
+            border-left: 4px solid #667EEA;
+        }
+
+        .notification.success {
+            border-left-color: var(--success);
+        }
+
+        .notification.error {
+            border-left-color: var(--error);
+        }
+
+        .notification.warning {
+            border-left-color: var(--warning);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            gap: 1rem;
+        }
+
+        .notification-text {
+            flex: 1;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: #64748B;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .notification-close:hover {
+            background: #F1F5F9;
+            color: var(--text);
+        }
+
+
+
+        /* Premium Task ID Numbers - Using dedicated badge element */
+        .task.show-numbers .task-id-badge {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+            animation: bounceIn 0.6s var(--ease-spring) forwards;
+            animation-delay: calc(var(--index) * 0.08s);
+        }
+
+        .task.hide-numbers .task-id-badge {
+            opacity: 0;
+            transform: translateY(-50%) scale(0.6) rotate(45deg);
+        }
+
+        .task:hover.show-numbers .task-id-badge {
+            transform: translateY(-50%) scale(1.25);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6);
+        }
+
+        .task.command-pulse .task-id-badge {
+            animation: commandPulse 0.8s ease-in-out;
+        }
+
+        /* Number Animations */
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.2) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes commandPulse {
+            0%, 100% {
+                box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.8), 0 0 0 4px rgba(102, 126, 234, 0.3);
+                transform: scale(1.15);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .task-id-badge {
+                width: 26px;
+                height: 26px;
+                font-size: 10px;
+                right: 0.25rem;
+            }
+        }
+
+        /* Premium Column-Specific Animations */
+        
+        /* Done Column Celebration */
+        .task-completed {
+            animation: taskComplete 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .task-completed .urgency-tag {
+            animation: priorityFlashGreen 0.5s ease-in-out;
+        }
+
+        @keyframes taskComplete {
+            0% { 
+                transform: scale(1); 
+                box-shadow: var(--glass-shadow);
+            }
+            50% { 
+                transform: scale(1.1); 
+                box-shadow: 0 0 20px rgba(72, 187, 120, 0.6), var(--glass-shadow);
+            }
+            100% { 
+                transform: scale(1); 
+                box-shadow: var(--glass-shadow);
+            }
+        }
+
+        @keyframes priorityFlashGreen {
+            0% { background: var(--high-urgency); }
+            50% { background: #48BB78; }
+            100% { background: var(--high-urgency); }
+        }
+
+        /* To Do Column Animation */
+        .task-slide-in-todo {
+            animation: slideInFromTop 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes slideInFromTop {
+            0% { 
+                transform: translateY(-100px) scale(0.8); 
+                opacity: 0;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0);
+            }
+            60% { 
+                transform: translateY(10px) scale(1.02); 
+                opacity: 0.8;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            }
+            100% { 
+                transform: translateY(0) scale(1); 
+                opacity: 1;
+                box-shadow: var(--glass-shadow);
+            }
+        }
+
+        /* In Progress Column Animation */
+        .task-slide-in-progress {
+            animation: slideInFromLeft 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes slideInFromLeft {
+            0% { 
+                transform: translateX(-150px) rotate(-5deg); 
+                opacity: 0;
+                box-shadow: 0 4px 15px rgba(255, 167, 38, 0);
+            }
+            70% { 
+                transform: translateX(5px) rotate(1deg) scale(1.05); 
+                opacity: 0.9;
+                box-shadow: 0 4px 15px rgba(255, 167, 38, 0.4);
+            }
+            100% { 
+                transform: translateX(0) rotate(0deg) scale(1); 
+                opacity: 1;
+                box-shadow: var(--glass-shadow);
+            }
+        }
+
+        /* Confetti Particles */
+        .confetti-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .confetti-square {
+            background: var(--confetti-color);
+        }
+
+        .confetti-circle {
+            background: var(--confetti-color);
+            border-radius: 50%;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateX(0) translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(var(--fall-x)) translateY(200px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Default Task Slide-in for Initial Load (uses To Do animation) */
+
+        /* Legacy animations for backward compatibility - removed duplicates */
+
+        @keyframes taskDelete {
+            0% { 
+                transform: scale(1) rotate(0deg); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(0.8) rotate(180deg); 
+                opacity: 0.5; 
+            }
+            100% { 
+                transform: scale(0) rotate(360deg); 
+                opacity: 0; 
+            }
+        }
+
+        @keyframes priorityPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .priority-changing {
+            animation: priorityPulse 0.6s var(--ease-bounce);
+        }
+
+        .shake {
+            animation: shake 0.5s var(--ease-bounce);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* Confetti System */
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            animation: confettiFall 2s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+ </head>
+ <body>
+     <!-- Particle Canvas for Premium Effects -->
+     <canvas id="particles-canvas"></canvas>
+     
+     <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">🎯 Voice Task Dashboard</div>
+            <div class="voice-status idle" id="voiceStatus">Ready for your commands <br> (Press Spacebar to start)</div>
+        </header>
+
+        <!-- Dashboard -->
+        <main class="dashboard">
+            <!-- Controls -->
+            <div class="controls">
+                <button class="add-task-btn" id="addTaskBtn">➕ Add Task</button>
+                <div class="mic-container" data-tooltip="You can also start recording by pressing space bar">
+                    <button class="mic-button" id="micButton">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Task Columns -->
+            <div class="columns">
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">📋 To Do</div>
+                        <div class="task-count" id="todoCount">0 tasks</div>
+                    </div>
+                    <div class="tasks" id="todoTasks" data-status="todo"></div>
+                </div>
+
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">⚡ In Progress</div>
+                        <div class="task-count" id="progressCount">0 tasks</div>
+                    </div>
+                    <div class="tasks" id="progressTasks" data-status="progress"></div>
+                </div>
+
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">✅ Done</div>
+                        <div class="task-count" id="doneCount">0 tasks</div>
+                    </div>
+                    <div class="tasks" id="doneTasks" data-status="done"></div>
+                </div>
+            </div>
+
+            <!-- Premium Voice Commands Help -->
+            <div class="voice-help">
+                <strong>🎤 Premium Voice Commands - Say Anything Naturally:</strong>
+                <div class="voice-commands">
+                    <div class="voice-command"><strong>Add Tasks:</strong> "Add task review documents with high priority" • "Create new item meeting notes"</div>
+                    <div class="voice-command"><strong>Move Tasks:</strong> "Move task 1 from done to in progress" • "Transfer documentation to todo" • "Put task 3 in done"</div>
+                    <div class="voice-command"><strong>Task Actions:</strong> "Complete report writing" • "Start task 2" • "Pause project review" • "Resume task 4"</div>
+                    <div class="voice-command"><strong>Priority:</strong> "Set task 1 priority to high" • "Make documentation urgent" • "Change meeting notes to low priority"</div>
+                    <div class="voice-command"><strong>Delete:</strong> "Delete old tasks" • "Remove/Trash task 3" • "Get rid of task 1"</div>
+                    <div class="voice-command"><strong>View/Count:</strong> "Show all tasks in progress" • "How many tasks done" • "List high priority tasks"</div>
+                    <div class="voice-command"><strong>Bulk Actions:</strong> "Clear all done tasks" • "Move all high priority tasks to progress" • "Archive completed tasks"</div>
+                    <div class="voice-command"><strong>Numbers:</strong> "Show task numbers" • "Hide task numbers" • "What's my next urgent task"</div>
+                </div>
+                <div style="margin-top: 1rem; font-size: 0.85rem; color: #64748B;">
+                    <strong>💡 Pro Tips:</strong> Use task names OR numbers (e.g., "task 1", "task 2"). Say "show task numbers" first to see task IDs. All commands work with natural language - just speak normally!
+                </div>
+            </div>
+
+            <!-- Notification Area -->
+            <div class="notification" id="notification" style="display: none;">
+                <div class="notification-content">
+                    <span class="notification-text" id="notificationText"></span>
+                    <button class="notification-close" id="notificationClose">×</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Add New Task</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label class="form-label" for="taskTitle">Task Description</label>
+                    <input type="text" id="taskTitle" class="form-input" placeholder="Enter task description..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="taskUrgency">Priority Level</label>
+                    <select id="taskUrgency" class="form-select">
+                        <option value="low">🟢 Low Priority</option>
+                        <option value="medium" selected>🟡 Medium Priority</option>
+                        <option value="high">🔴 High Priority</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelTask">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Premium Animation Manager
+        class AnimationManager {
+            constructor() {
+                this.animationQueue = [];
+                this.isProcessing = false;
+            }
+
+            queueAnimation(element, animation, options = {}) {
+                this.animationQueue.push({ element, animation, options });
+                if (!this.isProcessing) {
+                    this.processQueue();
+                }
+            }
+
+            async processQueue() {
+                this.isProcessing = true;
+                while (this.animationQueue.length > 0) {
+                    const { element, animation, options } = this.animationQueue.shift();
+                    await this.executeAnimation(element, animation, options);
+                }
+                this.isProcessing = false;
+            }
+
+            executeAnimation(element, animation, options) {
+                return new Promise(resolve => {
+                    element.classList.add(animation);
+                    const duration = options.duration || 600;
+                    setTimeout(() => {
+                        element.classList.remove(animation);
+                        resolve();
+                    }, duration);
+                });
+            }
+        }
+
+        // Enhanced Particle System with DOM Confetti
+        class ParticleSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.confettiColors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'];
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            // Enhanced confetti burst for task completion from exact position
+            createTaskCompletionConfettiFromPosition(centerX, centerY) {
+                // Create 15-20 DOM-based confetti particles
+                const particleCount = 15 + Math.floor(Math.random() * 6); // 15-20 particles
+                
+                for (let i = 0; i < particleCount; i++) {
+                    this.createConfettiParticle(centerX, centerY, i);
+                }
+            }
+
+            // Legacy method for backward compatibility
+            createTaskCompletionConfetti(taskElement) {
+                const rect = taskElement.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                this.createTaskCompletionConfettiFromPosition(centerX, centerY);
+            }
+
+            createConfettiParticle(x, y, index) {
+                const particle = document.createElement('div');
+                const isCircle = Math.random() > 0.5;
+                const color = this.confettiColors[Math.floor(Math.random() * this.confettiColors.length)];
+                
+                particle.className = `confetti-particle ${isCircle ? 'confetti-circle' : 'confetti-square'}`;
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.setProperty('--confetti-color', color);
+                
+                // Random fall direction between -100px to 100px
+                const fallX = (Math.random() - 0.5) * 200; // -100 to 100
+                particle.style.setProperty('--fall-x', fallX + 'px');
+                
+                // Random animation duration between 0.8s to 1.5s
+                const duration = 0.8 + Math.random() * 0.7; // 0.8 to 1.5s
+                
+                // Random delay between 0s to 0.3s
+                const delay = Math.random() * 0.3; // 0 to 0.3s
+                
+                particle.style.animation = `confettiFall ${duration}s linear ${delay}s forwards`;
+                
+                document.body.appendChild(particle);
+                
+                // Remove particle after animation completes
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, (duration + delay) * 1000 + 100);
+            }
+
+            // Legacy canvas confetti for other celebrations
+            createConfetti(x, y, colors = ['#FF4757', '#FFA726', '#66BB6A', '#667EEA', '#F093FB']) {
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: Math.random() * -8 - 2,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        life: 1,
+                        decay: Math.random() * 0.015 + 0.01,
+                        size: Math.random() * 8 + 4
+                    });
+                }
+            }
+
+            update() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3; // gravity
+                    p.life -= p.decay;
+
+                    if (p.life <= 0) {
+                        this.particles.splice(i, 1);
+                        continue;
+                    }
+
+                    this.ctx.save();
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.fillRect(p.x, p.y, p.size, p.size);
+                    this.ctx.restore();
+                }
+
+                if (this.particles.length > 0) {
+                    requestAnimationFrame(() => this.update());
+                }
+            }
+
+            celebrate(x, y) {
+                this.createConfetti(x, y);
+                this.update();
+            }
+        }
+
+        // Premium Sound Effects System
+        class SoundEffects {
+            constructor() {
+                this.audioContext = null;
+                this.initializeAudioContext();
+            }
+
+            initializeAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn('Audio context not supported');
+                }
+            }
+
+            // Play different sounds for different columns
+            playColumnSound(column) {
+                if (!this.audioContext) return;
+
+                switch (column) {
+                    case 'todo':
+                        this.playTodoSound();
+                        break;
+                    case 'progress':
+                        this.playProgressSound();
+                        break;
+                    case 'done':
+                        this.playDoneSound();
+                        break;
+                }
+            }
+
+            playTodoSound() {
+                // Light, clean click sound for To Do
+                this.playTone(800, 0.1, 'sine', 0.15);
+            }
+
+            playProgressSound() {
+                // Medium notification sound for In Progress
+                this.playTone(600, 0.15, 'triangle', 0.2);
+                setTimeout(() => this.playTone(700, 0.1, 'triangle', 0.15), 100);
+            }
+
+            playDoneSound() {
+                // Success chime for Done
+                this.playTone(523, 0.2, 'sine', 0.25); // C5
+                setTimeout(() => this.playTone(659, 0.2, 'sine', 0.25), 150); // E5
+                setTimeout(() => this.playTone(784, 0.3, 'sine', 0.3), 300); // G5
+            }
+
+            playErrorSound() {
+                // Error tone
+                this.playTone(200, 0.2, 'sawtooth', 0.2);
+                setTimeout(() => this.playTone(150, 0.2, 'sawtooth', 0.2), 150);
+            }
+
+            playSuccessSound() {
+                // Quick success confirmation
+                this.playTone(880, 0.1, 'sine', 0.2);
+                setTimeout(() => this.playTone(1047, 0.15, 'sine', 0.25), 80);
+            }
+
+            playShowNumbersSound() {
+                // Ascending scale for show numbers
+                const notes = [262, 330, 392, 523]; // C-E-G-C
+                notes.forEach((freq, index) => {
+                    setTimeout(() => this.playTone(freq, 0.08, 'sine', 0.1), index * 50);
+                });
+            }
+
+            playTone(frequency, duration, waveType = 'sine', volume = 0.2) {
+                if (!this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = waveType;
+
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+        }
+
+        // Enhanced Speech Synthesis
+        class VoiceFeedback {
+            constructor() {
+                this.synthesis = window.speechSynthesis;
+                this.voice = null;
+                this.loadVoices();
+            }
+
+            loadVoices() {
+                const voices = this.synthesis.getVoices();
+                this.voice = voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+            }
+
+            speak(text, options = {}) {
+                if (!this.synthesis) return;
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = this.voice;
+                utterance.rate = options.rate || 0.9;
+                utterance.pitch = options.pitch || 1;
+                utterance.volume = options.volume || 0.7;
+
+                this.synthesis.speak(utterance);
+            }
+        }
+
+        class VoiceTaskDashboard {
+            constructor() {
+                this.tasks = JSON.parse(localStorage.getItem('voiceTasks')) || [];
+                this.recognition = null;
+                this.isListening = false;
+                this.taskIdCounter = this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) + 1 : 1;
+
+                // Premium systems
+                this.animationManager = new AnimationManager();
+                this.particleSystem = new ParticleSystem(document.getElementById('particles-canvas'));
+                this.voiceFeedback = new VoiceFeedback();
+                this.soundEffects = new SoundEffects();
+                this.speechSynthesis = window.speechSynthesis;
+                this.autoHideTaskNumbers = false;
+                this.isSpacebarDown = false;
+
+                // Mobile Drag & Drop state
+                this.draggedElement = null;
+                this.ghostElement = null;
+                this.lastOverColumn = null;
+                this.touchStartX = 0;
+                this.touchStartY = 0;
+
+                this.initializeElements();
+                this.initializeVoiceRecognition();
+                this.initializeEventListeners();
+                this.renderTasks();
+                this.updateTaskCounts();
+            }
+
+            initializeElements() {
+                this.micButton = document.getElementById('micButton');
+                this.voiceStatus = document.getElementById('voiceStatus');
+                this.addTaskBtn = document.getElementById('addTaskBtn');
+                this.taskModal = document.getElementById('taskModal');
+                this.taskForm = document.getElementById('taskForm');
+                this.taskTitle = document.getElementById('taskTitle');
+                this.taskUrgency = document.getElementById('taskUrgency');
+                this.cancelTask = document.getElementById('cancelTask');
+
+                this.todoTasks = document.getElementById('todoTasks');
+                this.progressTasks = document.getElementById('progressTasks');
+                this.doneTasks = document.getElementById('doneTasks');
+
+                this.todoCount = document.getElementById('todoCount');
+                this.progressCount = document.getElementById('progressCount');
+                this.doneCount = document.getElementById('doneCount');
+                
+                this.notification = document.getElementById('notification');
+                this.notificationText = document.getElementById('notificationText');
+                this.notificationClose = document.getElementById('notificationClose');
+            }
+
+            initializeVoiceRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'en-US';
+
+                    this.recognition.onstart = () => {
+                        this.isListening = true;
+                        this.micButton.classList.add('listening');
+                        this.updateVoiceStatus('listening', 'Listening...');
+                        this.vibrate([100]);
+                    };
+
+                    this.recognition.onresult = (event) => {
+                        const command = event.results[0][0].transcript.toLowerCase().trim();
+                        const confidence = event.results[0][0].confidence;
+                        
+                        this.micButton.classList.remove('listening');
+                        this.micButton.classList.add('processing');
+                        this.updateVoiceStatus('processing', `Processing: "${command}"`);
+                        
+                        // Add a small delay to show what was heard
+                        setTimeout(() => {
+                            this.processVoiceCommand(command);
+                        }, 500);
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        this.updateVoiceStatus('error', 'Voice recognition error');
+                        this.micButton.classList.remove('listening');
+                        this.isListening = false;
+                        setTimeout(() => this.updateVoiceStatus('idle', 'Ready for commands'), 2000);
+                    };
+
+                    this.recognition.onend = () => {
+                        this.isListening = false;
+                        this.micButton.classList.remove('listening');
+                        if (this.voiceStatus.textContent !== 'Command executed!' && !this.voiceStatus.classList.contains('error')) {
+                            this.updateVoiceStatus('idle', 'Ready for commands');
+                        }
+                    };
+                } else {
+                    this.micButton.style.display = 'none';
+                    this.updateVoiceStatus('error', 'Voice recognition not supported');
+                }
+            }
+
+            initializeEventListeners() {
+                // Microphone button
+                this.micButton.addEventListener('click', () => {
+                    if (this.recognition) {
+                        if (!this.isListening) {
+                            this.recognition.start();
+                        }
+                    }
+                });
+
+                // Add task button
+                this.addTaskBtn.addEventListener('click', () => {
+                    this.showTaskModal();
+                });
+
+                // Task form
+                this.taskForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addTask();
+                });
+
+                this.cancelTask.addEventListener('click', () => {
+                    this.hideTaskModal();
+                });
+
+                // Modal close on outside click
+                this.taskModal.addEventListener('click', (e) => {
+                    if (e.target === this.taskModal) {
+                        this.hideTaskModal();
+                    }
+                });
+
+                // Initialize drag and drop for all task containers
+                this.initializeDragAndDrop();
+
+                // Notification close button
+                this.notificationClose.addEventListener('click', () => {
+                    this.hideNotification();
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideTaskModal();
+                        this.hideNotification();
+                    }
+                    if (e.ctrlKey && e.key === 'n') {
+                        e.preventDefault();
+                        this.showTaskModal();
+                    }
+
+                    // Spacebar to start recording
+                    if (e.code === 'Space' && !this.isEditingText()) {
+                        e.preventDefault();
+                        if (!this.isListening && !this.isSpacebarDown) {
+                            this.isSpacebarDown = true;
+                            this.recognition.start();
+                        }
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    // Spacebar to stop recording
+                    if (e.code === 'Space' && !this.isEditingText()) {
+                        e.preventDefault();
+                        this.isSpacebarDown = false;
+                        if (this.isListening) {
+                            this.recognition.stop();
+                        }
+                    }
+                });
+            }
+
+            isEditingText() {
+                const activeEl = document.activeElement;
+                if (!activeEl) return false;
+                const tagName = activeEl.tagName.toLowerCase();
+                return tagName === 'input' || tagName === 'textarea';
+            }
+
+            processVoiceCommand(command) {
+                console.log('Processing voice command:', command);
+                
+                // Enhanced Natural Language Processing with Maximum Flexibility
+                const addTaskRegex = /(?:add|create|new|make) (?:a )?(?:task|item|todo) (.+?)(?:\s+(?:with|as|at)\s+(high|medium|low)\s+priority)?$/i;
+                
+                // Enhanced move commands with source/destination specification
+                const moveTaskFromToRegex = /(?:move|transfer|shift|take) (?:task\s+(\d+)|(.+?)) from (to do|todo|in progress|progress|done|complete|completed) to (to do|todo|in progress|progress|done|complete|completed)/i;
+                const moveTaskToRegex = /(?:move|transfer|shift|send|put) (?:task\s+(\d+)|(.+?)) (?:to|into|in) (to do|todo|in progress|progress|done|complete|completed)/i;
+                
+                // Enhanced completion commands
+                const completeTaskRegex = /(?:complete|finish|done|mark done|mark complete|mark completed) (?:task\s+(\d+)|(.+))/i;
+                const undoCompleteRegex = /(?:undo|revert|uncomplete|unfinish) (?:task\s+(\d+)|(.+))/i;
+                
+                // Enhanced deletion commands
+                const deleteTaskRegex = /(?:delete|remove|trash|eliminate|get rid of) (?:task\s+(\d+)|(.+))/i;
+                
+                // Enhanced priority commands
+                const setPriorityRegex = /(?:set|change|update|make) (?:task\s+(\d+)|(.+?)) (?:priority )?(?:to|as) (high|medium|low)/i;
+                const urgentTaskRegex = /(?:make|set) (?:task\s+(\d+)|(.+?)) (?:urgent|high priority)/i;
+                
+                // Enhanced status commands
+                const startTaskRegex = /(?:start|begin|work on) (?:task\s+(\d+)|(.+))/i;
+                const pauseTaskRegex = /(?:pause|stop|halt) (?:task\s+(\d+)|(.+))/i;
+                const resumeTaskRegex = /(?:resume|continue|restart) (?:task\s+(\d+)|(.+))/i;
+                
+                // Enhanced display commands
+                const showTasksRegex = /(?:show|list|display|find) (?:all )?(high|medium|low) priority tasks/i;
+                const showColumnRegex = /(?:show|list|display) (?:all )?(?:tasks )?(?:in|from) (to do|todo|in progress|progress|done|complete|completed)/i;
+                const countTasksRegex = /(?:how many|count) tasks (?:are )?(?:in|from) (to do|todo|in progress|progress|done|complete|completed)/i;
+                const nextTaskRegex = /(?:what'?s|show|tell me) (?:my )?(?:next|first) (?:urgent |high priority |important )?task/i;
+                
+                // Enhanced bulk operations
+                const archiveRegex = /(?:archive|clear) (?:all )?(?:completed|done) tasks/i;
+                const bulkMoveRegex = /(?:move|bulk move|transfer) all (high|medium|low) priority tasks to (to do|todo|in progress|progress|done)/i;
+                const clearColumnRegex = /(?:clear|empty|delete all) (?:tasks )?(?:from|in) (to do|todo|in progress|progress|done)/i;
+                
+                // Display commands
+                const showNumbersRegex = /(?:show|display) task numbers/i;
+                const hideNumbersRegex = /(?:hide|remove) task numbers/i;
+
+                let commandExecuted = false;
+                let actionResult = false;
+
+                // Process commands in order of specificity (most specific first)
+                if (bulkMoveRegex.test(command)) {
+                    const matches = command.match(bulkMoveRegex);
+                    const priority = matches[1].toLowerCase();
+                    let targetStatus = this.normalizeStatus(matches[2].toLowerCase());
+                    actionResult = this.bulkMoveTasks(priority, targetStatus);
+                    commandExecuted = true;
+                } else if (addTaskRegex.test(command)) {
+                    const matches = command.match(addTaskRegex);
+                    const description = matches[1].trim();
+                    const urgency = matches[2] ? matches[2].toLowerCase() : 'medium';
+                    actionResult = this.addTaskVoice(description, urgency);
+                    commandExecuted = true;
+                } else if (moveTaskFromToRegex.test(command)) {
+                    // Handle "move task X from Y to Z" commands
+                    const matches = command.match(moveTaskFromToRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    let sourceStatus = this.normalizeStatus(matches[3].toLowerCase());
+                    let targetStatus = this.normalizeStatus(matches[4].toLowerCase());
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskFromToByIdVoice(parseInt(taskId), sourceStatus, targetStatus);
+                    } else {
+                        actionResult = this.moveTaskFromToVoice(taskName.trim(), sourceStatus, targetStatus);
+                    }
+                    commandExecuted = true;
+                } else if (moveTaskToRegex.test(command)) {
+                    // Handle "move task X to Y" commands
+                    const matches = command.match(moveTaskToRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    let targetStatus = this.normalizeStatus(matches[3].toLowerCase());
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskByIdVoice(parseInt(taskId), targetStatus);
+                    } else {
+                        actionResult = this.moveTaskVoice(taskName.trim(), targetStatus);
+                    }
+                    commandExecuted = true;
+                } else if (undoCompleteRegex.test(command)) {
+                    const matches = command.match(undoCompleteRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskByIdVoice(parseInt(taskId), 'todo');
+                    } else {
+                        actionResult = this.moveTaskVoice(taskName.trim(), 'todo');
+                    }
+                    commandExecuted = true;
+                } else if (completeTaskRegex.test(command)) {
+                    const matches = command.match(completeTaskRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskByIdVoice(parseInt(taskId), 'done');
+                    } else {
+                        actionResult = this.moveTaskVoice(taskName.trim(), 'done');
+                    }
+                    commandExecuted = true;
+                } else if (startTaskRegex.test(command)) {
+                    const matches = command.match(startTaskRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskByIdVoice(parseInt(taskId), 'progress');
+                    } else {
+                        actionResult = this.moveTaskVoice(taskName.trim(), 'progress');
+                    }
+                    commandExecuted = true;
+                } else if (pauseTaskRegex.test(command)) {
+                    const matches = command.match(pauseTaskRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskByIdVoice(parseInt(taskId), 'todo');
+                    } else {
+                        actionResult = this.moveTaskVoice(taskName.trim(), 'todo');
+                    }
+                    commandExecuted = true;
+                } else if (resumeTaskRegex.test(command)) {
+                    const matches = command.match(resumeTaskRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.moveTaskByIdVoice(parseInt(taskId), 'progress');
+                    } else {
+                        actionResult = this.moveTaskVoice(taskName.trim(), 'progress');
+                    }
+                    commandExecuted = true;
+                } else if (deleteTaskRegex.test(command)) {
+                    const matches = command.match(deleteTaskRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.deleteTaskByIdVoice(parseInt(taskId));
+                    } else {
+                        actionResult = this.deleteTaskVoice(taskName.trim());
+                    }
+                    commandExecuted = true;
+                } else if (urgentTaskRegex.test(command)) {
+                    const matches = command.match(urgentTaskRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    
+                    if (taskId) {
+                        actionResult = this.setPriorityByIdVoice(parseInt(taskId), 'high');
+                    } else {
+                        actionResult = this.setPriorityVoice(taskName.trim(), 'high');
+                    }
+                    commandExecuted = true;
+                } else if (setPriorityRegex.test(command)) {
+                    const matches = command.match(setPriorityRegex);
+                    const taskId = matches[1]; // Will be defined if task ID format
+                    const taskName = matches[2]; // Will be defined if description format
+                    const priority = matches[3].toLowerCase();
+                    
+                    if (taskId) {
+                        actionResult = this.setPriorityByIdVoice(parseInt(taskId), priority);
+                    } else {
+                        actionResult = this.setPriorityVoice(taskName.trim(), priority);
+                    }
+                    commandExecuted = true;
+                } else if (showColumnRegex.test(command)) {
+                    const matches = command.match(showColumnRegex);
+                    let status = this.normalizeStatus(matches[1].toLowerCase());
+                    actionResult = this.showTasksInColumn(status);
+                    commandExecuted = true;
+                } else if (showTasksRegex.test(command)) {
+                    const matches = command.match(showTasksRegex);
+                    const priority = matches[1].toLowerCase();
+                    actionResult = this.showTasksByPriority(priority);
+                    commandExecuted = true;
+                } else if (countTasksRegex.test(command)) {
+                    const matches = command.match(countTasksRegex);
+                    let status = this.normalizeStatus(matches[1].toLowerCase());
+                    actionResult = this.countTasksByStatus(status);
+                    commandExecuted = true;
+                } else if (nextTaskRegex.test(command)) {
+                    actionResult = this.getNextUrgentTask();
+                    commandExecuted = true;
+                } else if (clearColumnRegex.test(command)) {
+                    const matches = command.match(clearColumnRegex);
+                    let status = this.normalizeStatus(matches[1].toLowerCase());
+                    actionResult = this.clearColumn(status);
+                    commandExecuted = true;
+                } else if (archiveRegex.test(command)) {
+                    actionResult = this.archiveCompletedTasks();
+                    commandExecuted = true;
+                } else if (hideNumbersRegex.test(command)) {
+                    this.hideTaskNumbers();
+                    actionResult = 'Task numbers hidden';
+                    commandExecuted = true;
+                } else if (showNumbersRegex.test(command)) {
+                    actionResult = this.showTaskNumbers();
+                    commandExecuted = true;
+                }
+
+                if (commandExecuted) {
+                    if (actionResult !== false) {
+                        this.micButton.classList.remove('listening', 'processing');
+                        this.micButton.classList.add('success');
+                        this.updateVoiceStatus('idle', '✅');
+                        
+                        // Play success sound
+                        this.soundEffects.playSuccessSound();
+                        
+                        // Voice feedback for informational commands only
+                        if (typeof actionResult === 'string') {
+                            this.voiceFeedback.speak(actionResult);
+                            this.showNotification(`${actionResult}`, 'success');
+                        } else {
+                            this.showNotification(`✅ Command executed`, 'success');
+                        }
+                        
+                        this.vibrate([200, 100, 200]);
+                        
+                        // Auto-hide task numbers after command execution (except for show numbers command)
+                        if (this.autoHideTaskNumbers && !showNumbersRegex.test(command)) {
+                            setTimeout(() => this.hideTaskNumbers(), 1500);
+                        }
+                        
+                        setTimeout(() => {
+                            this.micButton.classList.remove('success');
+                            this.updateVoiceStatus('idle', 'Ready for commands');
+                        }, 1500);
+                    } else {
+                        this.micButton.classList.remove('listening', 'processing');
+                        this.micButton.classList.add('error');
+                        this.updateVoiceStatus('error', `❌ Command failed`);
+                        
+                        // Play error sound
+                        this.soundEffects.playErrorSound();
+                        
+                        this.showNotification(`❌ Task not found for command: "${command}"`, 'error');
+                        this.vibrate([500]);
+                        setTimeout(() => {
+                            this.micButton.classList.remove('error');
+                            this.updateVoiceStatus('idle', 'Ready for commands');
+                        }, 3000);
+                    }
+                } else {
+                    this.micButton.classList.remove('listening', 'processing');
+                    this.micButton.classList.add('error');
+                    this.updateVoiceStatus('error', `❌ Unrecognized command`);
+                    
+                    // Play error sound
+                    this.soundEffects.playErrorSound();
+                    
+                    this.showNotification(`❌ Command not recognized: "${command}"<br><br>Try commands like:<br>• "Add task review documents with high priority"<br>• "Show high priority tasks"<br>• "How many tasks in progress"<br>• "What's my next urgent task"`, 'error');
+                    this.vibrate([500]);
+                    setTimeout(() => {
+                        this.micButton.classList.remove('error');
+                        this.updateVoiceStatus('idle', 'Ready for commands');
+                    }, 4000);
+                }
+            }
+
+            addTaskVoice(description, urgency) {
+                try {
+                    if (!description || description.trim() === '') {
+                        return false;
+                    }
+
+                    const task = {
+                        id: this.taskIdCounter++,
+                        title: description,
+                        urgency: urgency,
+                        status: 'todo',
+                        createdAt: new Date().toISOString()
+                    };
+
+                    this.tasks.push(task);
+                    this.saveTasks();
+                    
+                    // Play sound for adding to todo column
+                    this.soundEffects.playColumnSound('todo');
+                    
+                    // Force UI update with animation
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                        
+                        // Apply todo column entrance animation
+                        setTimeout(() => {
+                            const newTaskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                            if (newTaskElement) {
+                                this.applyColumnAnimation(newTaskElement, 'todo');
+                            }
+                        }, 50);
+                    }, 100);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error adding task:', error);
+                    return false;
+                }
+            }
+
+            moveTaskVoice(taskName, targetStatus) {
+                try {
+                    const task = this.findTaskByName(taskName);
+                    if (task) {
+                        const oldStatus = task.status;
+                        task.status = targetStatus;
+                        this.saveTasks();
+                        
+                        // Play sound for the target column
+                        this.soundEffects.playColumnSound(targetStatus);
+                        
+                        // Force UI update with column-specific celebration
+                        setTimeout(() => {
+                            this.renderTasks();
+                            this.updateTaskCounts();
+                            
+                            // Apply column-specific entrance animations
+                            setTimeout(() => {
+                                const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                                if (taskElement) {
+                                    this.applyColumnAnimation(taskElement, targetStatus);
+                                }
+                            }, 50);
+                        }, 100);
+                        
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error moving task:', error);
+                    return false;
+                }
+            }
+
+            deleteTaskVoice(taskName) {
+                try {
+                    const taskIndex = this.tasks.findIndex(task => 
+                        task.title.toLowerCase().includes(taskName.toLowerCase())
+                    );
+                    
+                    if (taskIndex !== -1) {
+                        this.tasks.splice(taskIndex, 1);
+                        this.saveTasks();
+                        
+                        // Play error sound for delete action
+                        this.soundEffects.playErrorSound();
+                        
+                        // Force UI update
+                        setTimeout(() => {
+                            this.renderTasks();
+                            this.updateTaskCounts();
+                        }, 100);
+                        
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                    return false;
+                }
+            }
+
+            setPriorityVoice(taskName, priority) {
+                try {
+                    const task = this.findTaskByName(taskName);
+                    if (task) {
+                                            task.urgency = priority;
+                    this.saveTasks();
+                    
+                    // Play success sound for priority change
+                    this.soundEffects.playSuccessSound();
+                    
+                    // Force UI update
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                    }, 100);
+                        
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error setting priority:', error);
+                    return false;
+                }
+            }
+
+            findTaskByName(taskName) {
+                return this.tasks.find(task => 
+                    task.title.toLowerCase().includes(taskName.toLowerCase())
+                );
+            }
+
+            updateVoiceStatus(status, message) {
+                this.voiceStatus.className = `voice-status ${status}`;
+                this.voiceStatus.textContent = message;
+            }
+
+            vibrate(pattern) {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(pattern);
+                }
+            }
+
+            showTaskModal() {
+                this.taskModal.classList.add('show');
+                this.taskTitle.focus();
+            }
+
+            hideTaskModal() {
+                this.taskModal.classList.remove('show');
+                this.taskForm.reset();
+            }
+
+            addTask() {
+                const title = this.taskTitle.value.trim();
+                const urgency = this.taskUrgency.value;
+
+                if (!title) return;
+
+                const task = {
+                    id: this.taskIdCounter++,
+                    title: title,
+                    urgency: urgency,
+                    status: 'todo',
+                    createdAt: new Date().toISOString()
+                };
+
+                this.tasks.push(task);
+                this.saveTasks();
+                
+                // Play sound for adding to todo column
+                this.soundEffects.playColumnSound('todo');
+                
+                this.renderTasks();
+                this.updateTaskCounts();
+                this.hideTaskModal();
+                this.vibrate([100]);
+                
+                // Apply todo column entrance animation
+                setTimeout(() => {
+                    const newTaskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                    if (newTaskElement) {
+                        this.applyColumnAnimation(newTaskElement, 'todo');
+                    }
+                }, 50);
+            }
+
+            deleteTask(taskId) {
+                this.tasks = this.tasks.filter(task => task.id !== taskId);
+                this.saveTasks();
+                
+                // Play error sound for delete action
+                this.soundEffects.playErrorSound();
+                
+                this.renderTasks();
+                this.updateTaskCounts();
+                this.vibrate([200]);
+            }
+
+            initializeDragAndDrop() {
+                [this.todoTasks, this.progressTasks, this.doneTasks].forEach(container => {
+                    container.addEventListener('dragover', this.handleDragOver.bind(this));
+                    container.addEventListener('drop', this.handleDrop.bind(this));
+                    container.addEventListener('dragenter', this.handleDragEnter.bind(this));
+                    container.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                });
+            }
+
+            handleDragStart(e) {
+                e.target.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', e.target.dataset.taskId);
+                this.vibrate([50]);
+            }
+
+            handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+            }
+
+            handleDragEnter(e) {
+                e.preventDefault();
+                if (e.target.classList.contains('tasks')) {
+                    e.target.classList.add('drag-over');
+                }
+            }
+
+            handleDragLeave(e) {
+                if (e.target.classList.contains('tasks')) {
+                    e.target.classList.remove('drag-over');
+                }
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                const container = e.target.closest('.tasks');
+                if (container) {
+                    container.classList.remove('drag-over');
+                }
+                
+                const taskId = parseInt(e.dataTransfer.getData('text/plain'));
+                const newStatus = container ? container.dataset.status : null;
+                
+                if (newStatus) {
+                    this.moveTaskToNewStatus(taskId, newStatus);
+                }
+            }
+
+            moveTaskToNewStatus(taskId, newStatus) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (task && task.status !== newStatus) {
+                    task.status = newStatus;
+                    this.saveTasks();
+                    
+                    // Play sound for the target column
+                    this.soundEffects.playColumnSound(newStatus);
+                    
+                    this.renderTasks();
+                    this.updateTaskCounts();
+                    this.vibrate([100, 50, 100]);
+                    
+                    // Apply column-specific entrance animations
+                    setTimeout(() => {
+                        const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                        if (taskElement) {
+                            this.applyColumnAnimation(taskElement, newStatus);
+                        }
+                    }, 50);
+                }
+            }
+
+            renderTasks() {
+                this.todoTasks.innerHTML = '';
+                this.progressTasks.innerHTML = '';
+                this.doneTasks.innerHTML = '';
+
+                this.tasks.forEach(task => {
+                    const taskElement = this.createTaskElement(task);
+                    
+                    switch (task.status) {
+                        case 'todo':
+                            this.todoTasks.appendChild(taskElement);
+                            break;
+                        case 'progress':
+                            this.progressTasks.appendChild(taskElement);
+                            break;
+                        case 'done':
+                            this.doneTasks.appendChild(taskElement);
+                            break;
+                    }
+                });
+            }
+
+            createTaskElement(task) {
+                const taskDiv = document.createElement('div');
+                taskDiv.className = `task ${task.urgency}`;
+                taskDiv.draggable = true;
+                taskDiv.dataset.taskId = task.id;
+
+                // Calculate display ID (position in current tasks array + 1)
+                const displayId = this.getTaskDisplayId(task.id);
+
+                // Set task display ID and animation index
+                taskDiv.dataset.taskDisplayId = displayId;
+                taskDiv.style.setProperty('--index', displayId - 1);
+
+                taskDiv.innerHTML = `
+                    <div class="task-content">
+                        <input type="text" class="task-title-input" value="${task.title}" data-original-title="${task.title}" data-task-real-id="${task.id}">
+                        <div class="task-id-badge">${displayId}</div>
+                    </div>
+                    <div class="task-meta">
+                        <div class="priority-container">
+                            <span class="urgency-tag ${task.urgency}" data-task-id="${task.id}">${task.urgency}</span>
+                            <div class="priority-dropdown">
+                                <div class="priority-option high ${task.urgency === 'high' ? 'current' : ''}" data-priority="high" ${task.urgency === 'high' ? 'style="display:none"' : ''}>HIGH</div>
+                                <div class="priority-option medium ${task.urgency === 'medium' ? 'current' : ''}" data-priority="medium" ${task.urgency === 'medium' ? 'style="display:none"' : ''}>MEDIUM</div>
+                                <div class="priority-option low ${task.urgency === 'low' ? 'current' : ''}" data-priority="low" ${task.urgency === 'low' ? 'style="display:none"' : ''}>LOW</div>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="task-action delete" onclick="dashboard.deleteTask(${task.id})" title="Delete task">🗑️</button>
+                        </div>
+                    </div>
+                `;
+
+                taskDiv.addEventListener('dragstart', this.handleDragStart.bind(this));
+                taskDiv.addEventListener('dragend', this.handleDragEnd.bind(this));
+
+                // Add touch events for mobile drag & drop
+                taskDiv.addEventListener('touchstart', (e) => this.handleTouchStart(e, taskDiv), { passive: false });
+                taskDiv.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                taskDiv.addEventListener('touchend', () => this.handleTouchEnd());
+
+                // Add inline editing functionality
+                const titleInput = taskDiv.querySelector('.task-title-input');
+                this.setupInlineEditing(titleInput);
+
+                // Add priority editing functionality
+                const priorityTag = taskDiv.querySelector('.urgency-tag');
+                const priorityDropdown = taskDiv.querySelector('.priority-dropdown');
+                this.setupPriorityEditing(priorityTag, priorityDropdown);
+
+                return taskDiv;
+            }
+
+            updateTaskCounts() {
+                const todoCount = this.tasks.filter(t => t.status === 'todo').length;
+                const progressCount = this.tasks.filter(t => t.status === 'progress').length;
+                const doneCount = this.tasks.filter(t => t.status === 'done').length;
+
+                this.todoCount.textContent = `${todoCount} task${todoCount !== 1 ? 's' : ''}`;
+                this.progressCount.textContent = `${progressCount} task${progressCount !== 1 ? 's' : ''}`;
+                this.doneCount.textContent = `${doneCount} task${doneCount !== 1 ? 's' : ''}`;
+            }
+
+            saveTasks() {
+                localStorage.setItem('voiceTasks', JSON.stringify(this.tasks));
+            }
+
+            // Inline editing functionality
+            setupInlineEditing(titleInput) {
+                let originalValue = titleInput.value;
+                let isEditing = false;
+
+                titleInput.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent task card drag
+                    this.startEditing(titleInput);
+                });
+
+                titleInput.addEventListener('focus', () => {
+                    this.startEditing(titleInput);
+                });
+
+                titleInput.addEventListener('blur', () => {
+                    this.finishEditing(titleInput);
+                });
+
+                titleInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        titleInput.blur(); // Trigger save
+                    } else if (e.key === 'Escape') {
+                        titleInput.value = originalValue;
+                        titleInput.blur();
+                    }
+                });
+
+                titleInput.addEventListener('input', () => {
+                    // Auto-resize width based on content
+                    this.autoResizeInput(titleInput);
+                });
+            }
+
+            startEditing(titleInput) {
+                titleInput.classList.add('editing');
+                titleInput.dataset.originalTitle = titleInput.value;
+                titleInput.select();
+                
+                // Make task card non-draggable while editing
+                const taskCard = titleInput.closest('.task');
+                taskCard.draggable = false;
+            }
+
+            finishEditing(titleInput) {
+                titleInput.classList.remove('editing');
+                const newTitle = titleInput.value.trim();
+                const taskId = parseInt(titleInput.dataset.taskRealId);
+                
+                // Re-enable dragging
+                const taskCard = titleInput.closest('.task');
+                taskCard.draggable = true;
+
+                if (newTitle === '' || newTitle === titleInput.dataset.originalTitle) {
+                    // Revert to original if empty or unchanged
+                    titleInput.value = titleInput.dataset.originalTitle;
+                    return;
+                }
+
+                // Update task in data
+                const task = this.tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.title = newTitle;
+                    this.saveTasks();
+                    
+                    // Play success sound
+                    this.soundEffects.playSuccessSound();
+                    this.vibrate([50, 50, 50]);
+                    
+                    // Show success notification
+                    this.showNotification(`✅ Task updated: "${newTitle}"`, 'success');
+                }
+            }
+
+            autoResizeInput(input) {
+                // Create a temporary span to measure text width
+                const tempSpan = document.createElement('span');
+                tempSpan.style.visibility = 'hidden';
+                tempSpan.style.position = 'absolute';
+                tempSpan.style.fontSize = window.getComputedStyle(input).fontSize;
+                tempSpan.style.fontFamily = window.getComputedStyle(input).fontFamily;
+                tempSpan.style.fontWeight = window.getComputedStyle(input).fontWeight;
+                tempSpan.textContent = input.value || input.placeholder;
+                
+                document.body.appendChild(tempSpan);
+                const textWidth = tempSpan.offsetWidth;
+                document.body.removeChild(tempSpan);
+                
+                // Set minimum width and add some padding
+                input.style.width = Math.max(textWidth + 20, 100) + 'px';
+            }
+
+            // Priority editing functionality
+            setupPriorityEditing(priorityTag, priorityDropdown) {
+                const isMobile = window.innerWidth <= 768;
+
+                if (isMobile) {
+                    // Mobile: cycle priority on click
+                    priorityTag.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const taskId = parseInt(priorityTag.dataset.taskId);
+                        this.cycleTaskPriority(taskId);
+                    });
+                } else {
+                    // Desktop: show dropdown
+                    let isDropdownOpen = false;
+                    const taskCard = priorityTag.closest('.task');
+
+                    priorityTag.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        isDropdownOpen = !isDropdownOpen;
+                        this.togglePriorityDropdown(priorityDropdown, taskCard, isDropdownOpen);
+                    });
+
+                    // Handle priority option clicks
+                    const priorityOptions = priorityDropdown.querySelectorAll('.priority-option');
+                    priorityOptions.forEach(option => {
+                        option.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const newPriority = option.dataset.priority;
+                            const taskId = parseInt(priorityTag.dataset.taskId);
+                            this.updateTaskPriority(taskId, newPriority, priorityTag, priorityDropdown);
+                            isDropdownOpen = false;
+                            this.togglePriorityDropdown(priorityDropdown, taskCard, false);
+                        });
+                    });
+
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', (e) => {
+                        if (isDropdownOpen && !priorityTag.contains(e.target) && !priorityDropdown.contains(e.target)) {
+                            isDropdownOpen = false;
+                            this.togglePriorityDropdown(priorityDropdown, taskCard, false);
+                        }
+                    });
+                }
+            }
+
+            togglePriorityDropdown(dropdown, taskCard, show) {
+                if (show) {
+                    dropdown.classList.add('show');
+                } else {
+                    dropdown.classList.remove('show');
+                }
+            }
+
+            updateTaskPriority(taskId, newPriority, priorityTag, priorityDropdown) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || task.urgency === newPriority) return;
+
+                const oldPriority = task.urgency;
+                task.urgency = newPriority;
+                this.saveTasks();
+
+                // Update the tag visually
+                priorityTag.className = `urgency-tag ${newPriority}`;
+                priorityTag.textContent = newPriority;
+
+                // Update task card border
+                const taskCard = priorityTag.closest('.task');
+                taskCard.className = taskCard.className.replace(/\b(high|medium|low)\b/g, newPriority);
+
+                // Update dropdown current indicators
+                const options = priorityDropdown.querySelectorAll('.priority-option');
+                options.forEach(option => {
+                    option.classList.remove('current');
+                    
+                    // Hide new priority, show all others
+                    if (option.dataset.priority === newPriority) {
+                        option.style.display = 'none';
+                        option.classList.add('current');
+                    } else {
+                        option.style.display = 'block';
+                    }
+                });
+
+                // Play success sound and show notification
+                this.soundEffects.playSuccessSound();
+                this.vibrate([50, 50, 50]);
+                this.showNotification(`✅ Priority changed from ${oldPriority} to ${newPriority}`, 'success');
+
+                // Add priority change animation
+                taskCard.classList.add('priority-changing');
+                setTimeout(() => {
+                    taskCard.classList.remove('priority-changing');
+                }, 600);
+            }
+
+            showNotification(message, type = 'info') {
+                this.notificationText.innerHTML = message;
+                this.notification.style.display = 'block';
+                
+                // Add type-specific styling
+                this.notification.className = `notification ${type}`;
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    this.hideNotification();
+                }, 5000);
+            }
+
+            hideNotification() {
+                this.notification.style.display = 'none';
+            }
+
+            // Premium Voice Command Methods
+            showTasksByPriority(priority) {
+                const tasks = this.tasks.filter(task => task.urgency === priority);
+                if (tasks.length === 0) {
+                    return `No ${priority} priority tasks found`;
+                }
+                
+                const taskNames = tasks.map(task => task.title).join(', ');
+                return `You have ${tasks.length} ${priority} priority tasks: ${taskNames}`;
+            }
+
+            countTasksByStatus(status) {
+                const count = this.tasks.filter(task => task.status === status).length;
+                let statusName = status;
+                if (status === 'todo') statusName = 'to do';
+                if (status === 'progress') statusName = 'in progress';
+                
+                return `You have ${count} tasks ${statusName}`;
+            }
+
+            getNextUrgentTask() {
+                const highPriorityTasks = this.tasks.filter(task => 
+                    task.urgency === 'high' && task.status !== 'done'
+                ).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                
+                if (highPriorityTasks.length === 0) {
+                    const mediumTasks = this.tasks.filter(task => 
+                        task.urgency === 'medium' && task.status !== 'done'
+                    );
+                    if (mediumTasks.length === 0) {
+                        return 'No urgent tasks found';
+                    }
+                    return `Your next task is: ${mediumTasks[0].title}`;
+                }
+                
+                return `Your next urgent task is: ${highPriorityTasks[0].title}`;
+            }
+
+            archiveCompletedTasks() {
+                const completedTasks = this.tasks.filter(task => task.status === 'done');
+                if (completedTasks.length === 0) {
+                    return 'No completed tasks to archive';
+                }
+                
+                this.tasks = this.tasks.filter(task => task.status !== 'done');
+                this.saveTasks();
+                this.renderTasks();
+                this.updateTaskCounts();
+                
+                return `Archived ${completedTasks.length} completed tasks`;
+            }
+
+            bulkMoveTasks(priority, targetStatus) {
+                const tasksToMove = this.tasks.filter(task => task.urgency === priority);
+                if (tasksToMove.length === 0) {
+                    return `No ${priority} priority tasks found`;
+                }
+                
+                tasksToMove.forEach(task => {
+                    task.status = targetStatus;
+                });
+                
+                this.saveTasks();
+                this.renderTasks();
+                this.updateTaskCounts();
+                
+                let statusName = targetStatus;
+                if (targetStatus === 'todo') statusName = 'to do';
+                if (targetStatus === 'progress') statusName = 'in progress';
+                
+                return `Moved ${tasksToMove.length} ${priority} priority tasks to ${statusName}`;
+            }
+
+            // Task ID System Methods
+            getTaskDisplayId(taskId) {
+                // Return the index + 1 of the task in the current tasks array
+                const taskIndex = this.tasks.findIndex(task => task.id === taskId);
+                return taskIndex + 1;
+            }
+
+            getTaskByDisplayId(displayId) {
+                // Get task by its display position (1-based index)
+                const taskIndex = displayId - 1;
+                return this.tasks[taskIndex] || null;
+            }
+
+            showTaskNumbers() {
+                this.autoHideTaskNumbers = true;
+                
+                // Play show numbers sound effect
+                this.soundEffects.playShowNumbersSound();
+                
+                const tasks = document.querySelectorAll('.task');
+                tasks.forEach((task, index) => {
+                    task.style.setProperty('--index', index);
+                    task.classList.remove('hide-numbers');
+                    task.classList.add('show-numbers');
+                });
+                return 'Task numbers displayed';
+            }
+
+            hideTaskNumbers() {
+                this.autoHideTaskNumbers = false;
+                const tasks = document.querySelectorAll('.task');
+                tasks.forEach(task => {
+                    task.classList.remove('show-numbers');
+                    task.classList.add('hide-numbers');
+                });
+                
+                // Remove hide class after animation completes
+                setTimeout(() => {
+                    tasks.forEach(task => {
+                        task.classList.remove('hide-numbers');
+                    });
+                }, 300);
+            }
+
+            pulseTaskBadge(taskDisplayId) {
+                const task = document.querySelector(`[data-task-display-id="${taskDisplayId}"]`);
+                if (task) {
+                    task.classList.add('command-pulse');
+                    setTimeout(() => {
+                        task.classList.remove('command-pulse');
+                    }, 800);
+                }
+            }
+
+            // Utility method to normalize status names
+            normalizeStatus(status) {
+                if (status === 'to do' || status === 'todo') return 'todo';
+                if (status === 'in progress' || status === 'progress') return 'progress';
+                if (status === 'done' || status === 'complete' || status === 'completed') return 'done';
+                return status;
+            }
+
+            // Enhanced voice command methods with source/destination specification
+            moveTaskFromToVoice(taskName, sourceStatus, targetStatus) {
+                try {
+                    const task = this.findTaskByName(taskName);
+                    if (!task) {
+                        return false;
+                    }
+
+                    // Verify the task is actually in the source status
+                    if (task.status !== sourceStatus) {
+                        return false; // Task not in specified source column
+                    }
+
+                    const oldStatus = task.status;
+                    task.status = targetStatus;
+                    this.saveTasks();
+                    
+                    // Play sound for the target column
+                    this.soundEffects.playColumnSound(targetStatus);
+                    
+                    // Force UI update with column-specific celebration
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                        
+                        // Apply column-specific entrance animations
+                        setTimeout(() => {
+                            const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                            if (taskElement) {
+                                this.applyColumnAnimation(taskElement, targetStatus);
+                            }
+                        }, 50);
+                    }, 100);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error moving task from source to destination:', error);
+                    return false;
+                }
+            }
+
+            moveTaskFromToByIdVoice(taskDisplayId, sourceStatus, targetStatus) {
+                try {
+                    const task = this.getTaskByDisplayId(taskDisplayId);
+                    if (!task) {
+                        return false;
+                    }
+
+                    // Verify the task is actually in the source status
+                    if (task.status !== sourceStatus) {
+                        return false; // Task not in specified source column
+                    }
+
+                    // Pulse the targeted badge
+                    this.pulseTaskBadge(taskDisplayId);
+
+                    const oldStatus = task.status;
+                    task.status = targetStatus;
+                    this.saveTasks();
+                    
+                    // Play sound for the target column
+                    this.soundEffects.playColumnSound(targetStatus);
+                    
+                    // Force UI update with column-specific celebration
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                        
+                        // Apply column-specific entrance animations
+                        setTimeout(() => {
+                            const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                            if (taskElement) {
+                                this.applyColumnAnimation(taskElement, targetStatus);
+                            }
+                        }, 50);
+                    }, 100);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error moving task from source to destination by ID:', error);
+                    return false;
+                }
+            }
+
+            showTasksInColumn(status) {
+                const tasks = this.tasks.filter(task => task.status === status);
+                if (tasks.length === 0) {
+                    let statusName = status;
+                    if (status === 'todo') statusName = 'to do';
+                    if (status === 'progress') statusName = 'in progress';
+                    return `No tasks found in ${statusName} column`;
+                }
+                
+                const taskNames = tasks.map((task, index) => `${index + 1}. ${task.title}`).join(', ');
+                let statusName = status;
+                if (status === 'todo') statusName = 'to do';
+                if (status === 'progress') statusName = 'in progress';
+                
+                return `Tasks in ${statusName}: ${taskNames}`;
+            }
+
+            clearColumn(status) {
+                const tasksToDelete = this.tasks.filter(task => task.status === status);
+                if (tasksToDelete.length === 0) {
+                    let statusName = status;
+                    if (status === 'todo') statusName = 'to do';
+                    if (status === 'progress') statusName = 'in progress';
+                    return `No tasks to clear in ${statusName} column`;
+                }
+                
+                this.tasks = this.tasks.filter(task => task.status !== status);
+                this.saveTasks();
+                
+                // Play error sound for bulk delete action
+                this.soundEffects.playErrorSound();
+                
+                // Force UI update
+                setTimeout(() => {
+                    this.renderTasks();
+                    this.updateTaskCounts();
+                }, 100);
+                
+                let statusName = status;
+                if (status === 'todo') statusName = 'to do';
+                if (status === 'progress') statusName = 'in progress';
+                
+                return `Cleared ${tasksToDelete.length} tasks from ${statusName} column`;
+            }
+
+            // Task ID-based Voice Command Methods
+            moveTaskByIdVoice(taskDisplayId, targetStatus) {
+                try {
+                    const task = this.getTaskByDisplayId(taskDisplayId);
+                    if (!task) {
+                        return false;
+                    }
+
+                    // Pulse the targeted badge
+                    this.pulseTaskBadge(taskDisplayId);
+
+                    const oldStatus = task.status;
+                    task.status = targetStatus;
+                    this.saveTasks();
+                    
+                    // Play sound for the target column
+                    this.soundEffects.playColumnSound(targetStatus);
+                    
+                    // Force UI update with column-specific celebration
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                        
+                        // Apply column-specific entrance animations
+                        setTimeout(() => {
+                            const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+                            if (taskElement) {
+                                this.applyColumnAnimation(taskElement, targetStatus);
+                            }
+                        }, 50);
+                    }, 100);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error moving task by ID:', error);
+                    return false;
+                }
+            }
+
+            deleteTaskByIdVoice(taskDisplayId) {
+                try {
+                    const task = this.getTaskByDisplayId(taskDisplayId);
+                    if (!task) {
+                        return false;
+                    }
+
+                    // Pulse the targeted badge
+                    this.pulseTaskBadge(taskDisplayId);
+
+                    const taskIndex = this.tasks.findIndex(t => t.id === task.id);
+                    if (taskIndex !== -1) {
+                                            this.tasks.splice(taskIndex, 1);
+                    this.saveTasks();
+                    
+                    // Play error sound for delete action
+                    this.soundEffects.playErrorSound();
+                    
+                    // Force UI update
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                    }, 100);
+                        
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error deleting task by ID:', error);
+                    return false;
+                }
+            }
+
+            setPriorityByIdVoice(taskDisplayId, priority) {
+                try {
+                    const task = this.getTaskByDisplayId(taskDisplayId);
+                    if (!task) {
+                        return false;
+                    }
+
+                    // Pulse the targeted badge
+                    this.pulseTaskBadge(taskDisplayId);
+
+                    task.urgency = priority;
+                    this.saveTasks();
+                    
+                    // Play success sound for priority change
+                    this.soundEffects.playSuccessSound();
+                    
+                    // Force UI update
+                    setTimeout(() => {
+                        this.renderTasks();
+                        this.updateTaskCounts();
+                    }, 100);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error setting priority by ID:', error);
+                    return false;
+                }
+            }
+
+            // Central animation system for column-specific celebrations
+            applyColumnAnimation(taskElement, targetStatus) {
+                // Remove any existing animation classes
+                taskElement.classList.remove('task-slide-in-todo', 'task-slide-in-progress', 'task-completed');
+                
+                // Force reflow to ensure classes are removed
+                taskElement.offsetHeight;
+                
+                switch (targetStatus) {
+                    case 'todo':
+                        taskElement.classList.add('task-slide-in-todo');
+                        break;
+                    case 'progress':
+                        taskElement.classList.add('task-slide-in-progress');
+                        break;
+                    case 'done':
+                        // Get position BEFORE applying animation class
+                        const rect = taskElement.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        
+                        taskElement.classList.add('task-completed');
+                        
+                        // Trigger confetti burst from the exact task position
+                        setTimeout(() => {
+                            this.particleSystem.createTaskCompletionConfettiFromPosition(centerX, centerY);
+                        }, 300); // Delay to sync with bounce animation peak
+                        break;
+                }
+                
+                // Clean up animation classes after animation completes
+                setTimeout(() => {
+                    taskElement.classList.remove('task-slide-in-todo', 'task-slide-in-progress', 'task-completed');
+                }, 1200); // Longest animation duration + buffer
+            }
+
+            // Mobile Drag and Drop Handlers
+            handleTouchStart(e, element) {
+                // Ignore if touching an interactive element inside the card
+                if (e.target.closest('.task-title-input, .priority-container, .task-actions')) {
+                    return;
+                }
+                e.preventDefault();
+
+                this.draggedElement = element;
+                this.draggedElement.classList.add('dragging');
+
+                const touch = e.touches[0];
+                this.touchStartX = touch.clientX;
+                this.touchStartY = touch.clientY;
+
+                // Create ghost element
+                const rect = this.draggedElement.getBoundingClientRect();
+                this.ghostElement = this.draggedElement.cloneNode(true);
+                this.ghostElement.style.position = 'fixed';
+                this.ghostElement.style.left = `${rect.left}px`;
+                this.ghostElement.style.top = `${rect.top}px`;
+                this.ghostElement.style.width = `${rect.width}px`;
+                this.ghostElement.style.height = `${rect.height}px`;
+                this.ghostElement.style.pointerEvents = 'none';
+                this.ghostElement.style.zIndex = '2000';
+                this.ghostElement.style.opacity = '0.8';
+                this.ghostElement.style.transition = 'none';
+                document.body.appendChild(this.ghostElement);
+
+                this.vibrate([50]);
+            }
+
+            handleTouchMove(e) {
+                if (!this.draggedElement) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - this.touchStartX;
+                const deltaY = touch.clientY - this.touchStartY;
+
+                // Move ghost element
+                this.ghostElement.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(8deg)`;
+
+                // Highlight column under finger
+                this.ghostElement.style.display = 'none'; // Temporarily hide ghost to find element underneath
+                const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                this.ghostElement.style.display = '';
+
+                const column = elementUnder ? elementUnder.closest('.tasks') : null;
+
+                if (column !== this.lastOverColumn) {
+                    if (this.lastOverColumn) {
+                        this.lastOverColumn.classList.remove('drag-over');
+                    }
+                    if (column) {
+                        column.classList.add('drag-over');
+                    }
+                    this.lastOverColumn = column;
+                }
+            }
+
+            handleTouchEnd() {
+                if (!this.draggedElement) return;
+
+                // Handle drop
+                if (this.lastOverColumn) {
+                    const taskId = parseInt(this.draggedElement.dataset.taskId);
+                    const newStatus = this.lastOverColumn.dataset.status;
+                    this.moveTaskToNewStatus(taskId, newStatus);
+                    this.lastOverColumn.classList.remove('drag-over');
+                }
+
+                // Cleanup
+                this.draggedElement.classList.remove('dragging');
+                if (this.ghostElement) {
+                    this.ghostElement.remove();
+                }
+
+                this.draggedElement = null;
+                this.ghostElement = null;
+                this.lastOverColumn = null;
+            }
+
+            cycleTaskPriority(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task) return;
+
+                const priorityCycle = {
+                    'high': 'low',
+                    'low': 'medium',
+                    'medium': 'high'
+                };
+
+                const newPriority = priorityCycle[task.urgency];
+                task.urgency = newPriority;
+                this.saveTasks();
+
+                this.soundEffects.playSuccessSound();
+                this.vibrate([50]);
+
+                this.renderTasks();
+                this.updateTaskCounts();
+                
+                this.showNotification(`✅ Priority changed to ${newPriority}`, 'success');
+                
+                const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+                if (taskCard) {
+                    const priorityTag = taskCard.querySelector('.urgency-tag');
+                    if(priorityTag) {
+                        priorityTag.classList.add('priority-changing');
+                        setTimeout(() => {
+                            priorityTag.classList.remove('priority-changing');
+                        }, 600);
+                    }
+                }
+            }
+        }
+
+        // Initialize the dashboard
+        const dashboard = new VoiceTaskDashboard();
+
+        // Service Worker registration for better performance (optional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Register service worker if needed for PWA features
+            });
+        }
+
+        // Handle visibility change to pause/resume voice recognition
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && dashboard.isListening) {
+                dashboard.recognition.stop();
+            }
+        });
+
+        // Add some demo tasks for first-time users
+        if (dashboard.tasks.length === 0) {
+            const demoTasks = [
+                { id: 1, title: "Review quarterly reports", urgency: "high", status: "todo", createdAt: new Date().toISOString() },
+                { id: 2, title: "Update project documentation", urgency: "medium", status: "progress", createdAt: new Date().toISOString() },
+                { id: 3, title: "Team standup meeting", urgency: "low", status: "done", createdAt: new Date().toISOString() }
+            ];
+            
+            dashboard.tasks = demoTasks;
+            dashboard.taskIdCounter = 4;
+            dashboard.saveTasks();
+            dashboard.renderTasks();
+            dashboard.updateTaskCounts();
+
+            // Animate initial demo tasks
+            setTimeout(() => {
+                document.querySelectorAll('.task').forEach((task, index) => {
+                    task.style.animation = `slideInFromTop 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${index * 0.1}s forwards`;
+                });
+            }, 100);
+        }
+    </script>
+</body>
+</html>

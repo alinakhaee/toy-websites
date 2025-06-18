@@ -1,0 +1,2589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gesture Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Comfortaa:wght@400;600;700&display=swap');
+        
+        :root {
+            /* Level 1 - Warm Earth Tones */
+            --bg-color: #f4e6d7;
+            --clay-base: #e8d5c4;
+            --clay-shadow: #c9a876;
+            --clay-highlight: #f5ebdc;
+            --text-color: #8b4513;
+            --primary-color: #d2691e;
+            --success-color: #228b22;
+            --error-color: #dc143c;
+            --warning-color: #ff8c00;
+            --accent-color: #cd853f;
+            
+            /* Transition duration for color morphing */
+            --color-transition: 2s ease-in-out;
+        }
+
+        /* Level-specific color palettes */
+        .level-1 {
+            --bg-color: #f4e6d7;
+            --clay-base: #e8d5c4;
+            --clay-shadow: #c9a876;
+            --clay-highlight: #f5ebdc;
+            --text-color: #8b4513;
+            --primary-color: #d2691e;
+            --accent-color: #cd853f;
+            --particle-color: rgba(205, 133, 63, 0.4);
+        }
+
+        .level-2 {
+            --bg-color: #f2e0c7;
+            --clay-base: #e0c4a8;
+            --clay-shadow: #b8956a;
+            --clay-highlight: #f7ebce;
+            --text-color: #a0522d;
+            --primary-color: #e67e22;
+            --accent-color: #d68910;
+            --particle-color: rgba(230, 126, 34, 0.4);
+        }
+
+        .level-3 {
+            --bg-color: #eed8bb;
+            --clay-base: #d4b896;
+            --clay-shadow: #a68b5b;
+            --clay-highlight: #f8e6c8;
+            --text-color: #b7472a;
+            --primary-color: #e74c3c;
+            --accent-color: #dc7633;
+            --particle-color: rgba(231, 76, 60, 0.4);
+        }
+
+        .level-4 {
+            --bg-color: #e8d0a9;
+            --clay-base: #c7a882;
+            --clay-shadow: #9a804f;
+            --clay-highlight: #f4ddc0;
+            --text-color: #c0392b;
+            --primary-color: #e74c3c;
+            --accent-color: #d35400;
+            --particle-color: rgba(211, 84, 0, 0.4);
+        }
+
+        .level-5-plus {
+            --bg-color: #e2c89a;
+            --clay-base: #b89968;
+            --clay-shadow: #8b6914;
+            --clay-highlight: #f0d5a8;
+            --text-color: #d35400;
+            --primary-color: #c0392b;
+            --accent-color: #b7472a;
+            --particle-color: rgba(183, 71, 42, 0.4);
+        }
+
+        body {
+            font-family: 'Nunito', 'Comic Sans MS', cursive, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--bg-color) 0%, var(--clay-base) 25%, var(--clay-shadow) 50%, var(--clay-highlight) 75%, var(--accent-color) 100%);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+            transition: background var(--color-transition), color var(--color-transition);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--particle-color) 2px, transparent 2px),
+                radial-gradient(circle at 80% 80%, var(--particle-color) 1px, transparent 1px),
+                radial-gradient(circle at 40% 40%, var(--particle-color) 3px, transparent 3px);
+            background-size: 200px 200px, 150px 150px, 300px 300px;
+            animation: floatingParticles 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+            transition: background-image var(--color-transition);
+        }
+
+        @keyframes floatingParticles {
+            0% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(120deg); }
+            66% { transform: translateY(5px) rotate(240deg); }
+            100% { transform: translateY(0px) rotate(360deg); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            background-color: var(--clay-base);
+            box-shadow: 
+                15px 15px 30px var(--clay-shadow), 
+                -15px -15px 30px var(--clay-highlight),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.3),
+                inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+            /* border-radius: 25px;
+            border: 3px solid var(--accent-color); */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            animation: clayBreathing 4s ease-in-out infinite;
+            transition: all var(--color-transition);
+        }
+
+        .container.color-morph {
+            animation: clayBreathing 4s ease-in-out infinite, colorPulse 2s ease-in-out;
+        }
+
+        @keyframes colorPulse {
+            0%, 100% { 
+                filter: brightness(1) saturate(1);
+                transform: scale(1);
+            }
+            50% { 
+                filter: brightness(1.1) saturate(1.2);
+                transform: scale(1.01);
+            }
+        }
+
+        @keyframes clayBreathing {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    15px 15px 30px var(--clay-shadow), 
+                    -15px -15px 30px var(--clay-highlight),
+                    inset 2px 2px 4px rgba(255, 255, 255, 0.3),
+                    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+            }
+            50% { 
+                transform: scale(1.005);
+                box-shadow: 
+                    18px 18px 35px var(--clay-shadow), 
+                    -18px -18px 35px var(--clay-highlight),
+                    inset 3px 3px 6px rgba(255, 255, 255, 0.4),
+                    inset -3px -3px 6px rgba(0, 0, 0, 0.15);
+            }
+        }
+
+        .game-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--clay-shadow);
+            background: linear-gradient(145deg, var(--clay-highlight), var(--clay-base));
+            box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+            animation: claySlideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            transform: translateY(-100%);
+            transition: all var(--color-transition);
+        }
+
+        @keyframes claySlideDown {
+            0% {
+                transform: translateY(-100%) scaleY(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(5px) scaleY(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(0) scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .score-container, .level-container {
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            text-shadow: 
+                1px 1px 3px var(--clay-shadow),
+                -1px -1px 2px var(--clay-highlight),
+                0 0 8px rgba(0, 0, 0, 0.1);
+            background: 
+                radial-gradient(ellipse at top, var(--clay-highlight), transparent 70%),
+                radial-gradient(ellipse at bottom, var(--clay-shadow), transparent 70%),
+                linear-gradient(145deg, var(--clay-base), var(--clay-highlight));
+            padding: 12px 25px;
+            border-radius: 25px;
+            border: 4px solid var(--accent-color);
+            box-shadow: 
+                6px 6px 12px var(--clay-shadow), 
+                -6px -6px 12px var(--clay-highlight),
+                inset 2px 2px 6px rgba(255, 255, 255, 0.4),
+                inset -2px -2px 6px rgba(139, 69, 19, 0.2),
+                inset 0 0 10px var(--primary-color);
+            position: relative;
+            overflow: hidden;
+            min-width: 80px;
+            text-align: center;
+            transition: all var(--color-transition);
+        }
+
+        .score-container::before, .level-container::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent);
+            border-radius: 20px 20px 50% 50%;
+            pointer-events: none;
+        }
+
+        .score-number, .level-number {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-shadow: inherit;
+        }
+
+        .score-number.bounce, .level-number.bounce {
+            animation: clayBounce 0.6s ease-out;
+        }
+
+        @keyframes clayBounce {
+            0% { transform: scale(1); text-shadow: inherit; }
+            25% { 
+                transform: scale(1.3) rotate(-2deg); 
+                text-shadow: 
+                    2px 2px 6px var(--clay-shadow),
+                    -2px -2px 4px var(--clay-highlight),
+                    0 0 12px var(--primary-color);
+            }
+            50% { 
+                transform: scale(1.1) rotate(1deg); 
+                text-shadow: 
+                    1px 1px 4px var(--clay-shadow),
+                    -1px -1px 3px var(--clay-highlight),
+                    0 0 8px var(--primary-color);
+            }
+            75% { transform: scale(1.05) rotate(-0.5deg); }
+            100% { transform: scale(1) rotate(0deg); text-shadow: inherit; }
+        }
+
+        .game-area {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(139, 69, 19, 0.1), transparent 40%),
+                radial-gradient(circle at 40% 80%, rgba(205, 133, 63, 0.05), transparent 30%),
+                linear-gradient(145deg, var(--clay-base), var(--clay-highlight));
+            overflow: hidden;
+            animation: clayExpand 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards 0.3s;
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        @keyframes clayExpand {
+            0% {
+                transform: scale(0.9) rotateZ(-1deg);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.02) rotateZ(0.5deg);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1) rotateZ(0deg);
+                opacity: 1;
+            }
+        }
+
+        #gestureCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(210, 105, 30, 0.4) 0%, 
+                rgba(210, 105, 30, 0.2) 40%, 
+                transparent 70%);
+            pointer-events: none;
+            animation: rippleExpand 0.8s ease-out forwards;
+        }
+
+        @keyframes rippleExpand {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .clay-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, var(--accent-color), var(--clay-shadow));
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 
+                1px 1px 2px rgba(139, 69, 19, 0.6),
+                inset 1px 1px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .clay-particle.small {
+            width: 4px;
+            height: 4px;
+        }
+
+        .clay-particle.medium {
+            width: 6px;
+            height: 6px;
+        }
+
+        .clay-particle.large {
+            width: 10px;
+            height: 10px;
+        }
+
+        .squish-effect {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, 
+                rgba(210, 105, 30, 0.3) 0%, 
+                rgba(205, 133, 63, 0.2) 40%, 
+                transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: claySquish 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes claySquish {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            30% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 0.8;
+            }
+            60% {
+                transform: scale(0.9) rotate(-3deg);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(1.1) rotate(0deg);
+                opacity: 0;
+            }
+        }
+
+        .timer-container {
+            position: absolute;
+            bottom: 15px;
+            width: 85%;
+            left: 7.5%;
+            animation: claySlideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards 0.6s;
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        @keyframes claySlideUp {
+            0% {
+                transform: translateY(100%) scaleX(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-5px) scaleX(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(0) scaleX(1);
+                opacity: 1;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 16px;
+            background: 
+                linear-gradient(180deg, var(--clay-shadow), var(--clay-base) 30%, var(--clay-shadow)),
+                radial-gradient(ellipse at top, rgba(0,0,0,0.2), transparent 50%);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 
+                inset 4px 4px 8px var(--clay-shadow),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+                inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--accent-color);
+            position: relative;
+            transition: all var(--color-transition);
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            right: 1px;
+            height: 30%;
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+            border-radius: 8px;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, 
+                    var(--primary-color) 0%, 
+                    var(--accent-color) 25%, 
+                    var(--primary-color) 50%, 
+                    var(--accent-color) 75%, 
+                    var(--primary-color) 100%);
+            background-size: 20px 20px;
+            animation: flowingClay 1s linear infinite;
+            transition: width 0.1s linear, background var(--color-transition);
+            border-radius: 8px;
+            box-shadow: 
+                0 0 8px var(--primary-color),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3),
+                inset 0 -1px 2px var(--clay-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #timer-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                transparent);
+            animation: liquidShine 2s ease-in-out infinite;
+        }
+
+        @keyframes flowingClay {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+
+        @keyframes liquidShine {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        .modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(139, 69, 19, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal.clay-morph-out {
+            animation: clayMorphOut 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .modal.clay-morph-in {
+            animation: clayMorphIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes clayMorphOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            30% {
+                transform: scale(1.05) rotateZ(1deg);
+                opacity: 0.8;
+            }
+            60% {
+                transform: scale(0.95) rotateZ(-0.5deg);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0.8) rotateZ(0deg);
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+
+        @keyframes clayMorphIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) rotateZ(0deg);
+            }
+            40% {
+                transform: scale(1.1) rotateZ(-1deg);
+                opacity: 0.6;
+            }
+            70% {
+                transform: scale(0.98) rotateZ(0.5deg);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1) rotateZ(0deg);
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, var(--clay-base), var(--clay-highlight));
+            padding: 35px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 
+                20px 20px 40px var(--clay-shadow), 
+                -20px -20px 40px var(--clay-highlight),
+                inset 3px 3px 6px rgba(255, 255, 255, 0.3),
+                inset -3px -3px 6px rgba(0, 0, 0, 0.1);
+            border: 4px solid var(--accent-color);
+            animation: clayContentAppear 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            transform: scale(0.8);
+            transition: all var(--color-transition);
+            max-width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        @keyframes clayContentAppear {
+            0% {
+                transform: scale(0.6) rotateZ(-3deg);
+                opacity: 0;
+            }
+            40% {
+                transform: scale(1.1) rotateZ(1deg);
+                opacity: 0.8;
+            }
+            70% {
+                transform: scale(0.95) rotateZ(-0.5deg);
+                opacity: 0.95;
+            }
+            100% {
+                transform: scale(1) rotateZ(0deg);
+                opacity: 1;
+            }
+        }
+
+        .btn {
+            font-family: 'Comfortaa', sans-serif;
+            padding: 18px 35px;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--clay-highlight);
+            background: linear-gradient(145deg, var(--primary-color), var(--accent-color));
+            border: 3px solid var(--clay-shadow);
+            border-radius: 18px;
+            cursor: pointer;
+            box-shadow: 
+                8px 8px 15px var(--clay-shadow), 
+                -8px -8px 15px var(--clay-highlight);
+            transition: all 0.2s ease-in-out, background var(--color-transition), border-color var(--color-transition), box-shadow var(--color-transition);
+            text-shadow: 
+                1px 1px 3px var(--clay-shadow),
+                -1px -1px 1px rgba(255, 255, 255, 0.3),
+                0 0 6px rgba(0, 0, 0, 0.2);
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                10px 10px 20px var(--clay-shadow), 
+                -10px -10px 20px var(--clay-highlight);
+        }
+
+        .btn:active {
+            box-shadow: 
+                inset 8px 8px 15px var(--clay-shadow), 
+                inset -8px -8px 15px var(--clay-highlight);
+            transform: translateY(3px);
+            transition: all 0.1s ease-out;
+        }
+
+        .feedback-text {
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 2.2em;
+            font-weight: 800;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: fadeOut 1s forwards;
+            text-shadow: 
+                3px 3px 6px var(--clay-shadow),
+                -2px -2px 4px var(--clay-highlight),
+                0 0 12px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .feedback-text.correct { color: var(--success-color); }
+        .feedback-text.incorrect { color: var(--error-color); }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            to { opacity: 0; transform: translate(-50%, -80%) scale(1.5); }
+        }
+        
+        .gesture-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at 30% 30%, var(--clay-highlight), transparent 50%),
+                radial-gradient(circle at 70% 70%, var(--clay-shadow), transparent 50%),
+                linear-gradient(145deg, var(--clay-highlight), var(--clay-base));
+            border-radius: 25px;
+            box-shadow: 
+                8px 8px 16px var(--clay-shadow), 
+                -8px -8px 16px var(--clay-highlight),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.4),
+                inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+            border: 3px solid var(--accent-color);
+            animation: gestureAppear 0.6s ease-out;
+            transition: all var(--color-transition);
+        }
+
+        .gesture-display:hover {
+            transform: translate(-50%, -50%) scale(1.02);
+            transition: transform 0.2s ease-out;
+        }
+
+        @keyframes gestureAppear {
+            0% {
+                transform: translate(-50%, -50%) scale(0.3);
+                opacity: 0;
+            }
+            60% {
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .gesture-display svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 1;
+            animation: pulseClay 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseClay {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        .gesture-path {
+            stroke: var(--primary-color);
+            stroke-width: 14;
+            filter: 
+                drop-shadow(2px 2px 3px var(--clay-shadow))
+                drop-shadow(-1px -1px 2px rgba(255, 255, 255, 0.6))
+                drop-shadow(0px 0px 8px var(--primary-color));
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw-path-clay 0.8s ease-in-out forwards;
+            transition: stroke var(--color-transition), filter var(--color-transition);
+        }
+
+        .gesture-path-outline {
+            stroke: var(--clay-shadow);
+            stroke-width: 18;
+            opacity: 0.6;
+            filter: blur(1px);
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw-path-clay 0.8s ease-in-out forwards 0.1s;
+        }
+
+        @keyframes draw-path-clay {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .game-over-flash {
+            animation: flash-red 0.5s;
+        }
+
+        @keyframes flash-red {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(220, 20, 60, 0.3); }
+            100% { background-color: transparent; }
+        }
+
+        .level-up-flash {
+            animation: flash-blue 0.8s;
+        }
+
+        @keyframes flash-blue {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(210, 105, 30, 0.3); }
+        }
+
+        .instructions {
+            font-family: 'Nunito', sans-serif;
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            text-shadow: 
+                1px 1px 3px var(--clay-shadow),
+                -1px -1px 2px var(--clay-highlight),
+                0 0 8px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(145deg, var(--clay-highlight), var(--clay-base));
+            padding: 12px 25px;
+            border-radius: 20px;
+            margin: 0 20px;
+            box-shadow: 
+                4px 4px 8px var(--clay-shadow), 
+                -4px -4px 8px var(--clay-highlight),
+                inset 1px 1px 3px rgba(255, 255, 255, 0.4),
+                inset -1px -1px 3px rgba(0, 0, 0, 0.1);
+            letter-spacing: 0.3px;
+            animation: gentleFadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes gentleFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(2px) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-content p {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-shadow: 
+                1px 1px 2px var(--clay-shadow),
+                -1px -1px 1px var(--clay-highlight);
+            margin: 10px 0;
+            letter-spacing: 0.3px;
+        }
+
+        h1, h2 {
+            font-family: 'Comfortaa', 'Nunito', cursive, sans-serif;
+            font-weight: 700;
+            text-shadow: 
+                2px 2px 4px var(--clay-shadow),
+                -1px -1px 2px var(--clay-highlight),
+                0 0 10px rgba(0, 0, 0, 0.1);
+            letter-spacing: 0.5px;
+        }
+
+        .modal-content h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .modal-content h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .score-container:hover, .level-container:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                8px 8px 16px var(--clay-shadow), 
+                -8px -8px 16px var(--clay-highlight),
+                inset 2px 2px 6px rgba(255, 255, 255, 0.5),
+                inset -2px -2px 6px rgba(139, 69, 19, 0.15);
+        }
+
+        .ambient-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .ambient-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: radial-gradient(circle, var(--particle-color), transparent 70%);
+            border-radius: 50%;
+            animation: floatAmbient 8s ease-in-out infinite;
+            transition: background var(--color-transition);
+        }
+
+        .ambient-particle:nth-child(2) { animation-delay: -2s; left: 20%; }
+        .ambient-particle:nth-child(3) { animation-delay: -4s; left: 40%; }
+        .ambient-particle:nth-child(4) { animation-delay: -6s; left: 60%; }
+        .ambient-particle:nth-child(5) { animation-delay: -1s; left: 80%; }
+
+        @keyframes floatAmbient {
+            0%, 100% {
+                transform: translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            90% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            50% {
+                transform: translateY(-20px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Home Screen Styles */
+        .home-screen {
+            background: linear-gradient(135deg, 
+                var(--bg-color) 0%, 
+                var(--clay-base) 30%, 
+                var(--clay-highlight) 50%, 
+                var(--clay-shadow) 70%, 
+                var(--accent-color) 100%);
+            z-index: 15;
+        }
+
+        .home-content {
+            background: linear-gradient(145deg, var(--clay-base), var(--clay-highlight));
+            padding: 50px 40px;
+            border-radius: 35px;
+            text-align: center;
+            box-shadow: 
+                25px 25px 50px var(--clay-shadow), 
+                -25px -25px 50px var(--clay-highlight),
+                inset 4px 4px 8px rgba(255, 255, 255, 0.4),
+                inset -4px -4px 8px rgba(0, 0, 0, 0.1);
+            border: 5px solid var(--accent-color);
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+            animation: clayContentAppear 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            max-height: 95vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 400px) {
+            .home-content {
+                padding: 40px 25px;
+            }
+
+            .game-title {
+                font-size: 2.8em;
+            }
+
+            .game-subtitle {
+                font-size: 1.1em;
+            }
+
+            .home-btn {
+                font-size: 1.5em;
+                padding: 20px 40px;
+            }
+        }
+
+        .home-content::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent);
+            border-radius: 30px 30px 60% 60%;
+            pointer-events: none;
+        }
+
+        .game-title {
+            font-family: 'Comfortaa', cursive;
+            font-size: 3.5em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 0 0 10px 0;
+            text-shadow: 
+                3px 3px 8px var(--clay-shadow),
+                -2px -2px 4px var(--clay-highlight),
+                0 0 15px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 
+                    3px 3px 8px var(--clay-shadow),
+                    -2px -2px 4px var(--clay-highlight),
+                    0 0 15px rgba(0, 0, 0, 0.3);
+            }
+            50% {
+                transform: scale(1.02);
+                text-shadow: 
+                    4px 4px 12px var(--clay-shadow),
+                    -3px -3px 6px var(--clay-highlight),
+                    0 0 20px var(--primary-color);
+            }
+        }
+
+        .game-subtitle {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0 0 40px 0;
+            text-shadow: 
+                1px 1px 3px var(--clay-shadow),
+                -1px -1px 2px var(--clay-highlight);
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+
+        .home-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .home-btn {
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 1.8em;
+            font-weight: 700;
+            padding: 25px 50px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 5px solid var(--clay-shadow);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .primary-home-btn {
+            background: linear-gradient(145deg, var(--primary-color), var(--accent-color));
+            color: var(--clay-highlight);
+            box-shadow: 
+                12px 12px 25px var(--clay-shadow), 
+                -12px -12px 25px var(--clay-highlight),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.3),
+                inset -3px -3px 8px rgba(0, 0, 0, 0.2);
+            text-shadow: 
+                2px 2px 4px var(--clay-shadow),
+                -1px -1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .secondary-home-btn {
+            background: linear-gradient(145deg, var(--clay-base), var(--clay-highlight));
+            color: var(--text-color);
+            box-shadow: 
+                12px 12px 25px var(--clay-shadow), 
+                -12px -12px 25px var(--clay-highlight),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.4),
+                inset -3px -3px 8px rgba(0, 0, 0, 0.1);
+            text-shadow: 
+                1px 1px 3px var(--clay-shadow),
+                -1px -1px 2px var(--clay-highlight);
+            border-color: var(--accent-color);
+        }
+
+        .btn-text {
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-clay-shine {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            height: 35%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent);
+            border-radius: 20px 20px 50% 50%;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                15px 15px 30px var(--clay-shadow), 
+                -15px -15px 30px var(--clay-highlight),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.4),
+                inset -3px -3px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .home-btn:hover .btn-clay-shine {
+            height: 40%;
+            opacity: 1;
+        }
+
+        .home-btn:hover .btn-text {
+            transform: scale(1.05);
+        }
+
+        .home-btn:active {
+            transform: translateY(2px);
+            box-shadow: 
+                8px 8px 15px var(--clay-shadow), 
+                -8px -8px 15px var(--clay-highlight),
+                inset 6px 6px 12px var(--clay-shadow),
+                inset -6px -6px 12px rgba(255, 255, 255, 0.3);
+            transition: all 0.1s ease-out;
+        }
+
+        .home-btn:active .btn-text {
+            transform: scale(0.98);
+        }
+
+        .home-btn:active .btn-clay-shine {
+            height: 25%;
+            opacity: 0.6;
+        }
+
+        .home-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--clay-shadow);
+        }
+
+        .high-score-display {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+            text-shadow: 
+                1px 1px 2px var(--clay-shadow),
+                -1px -1px 1px var(--clay-highlight);
+            letter-spacing: 0.3px;
+        }
+
+        /* Button Press Animation */
+        .home-btn.pressed {
+            animation: clayButtonPress 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes clayButtonPress {
+            0% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(3px) scale(0.98); }
+            50% { transform: translateY(1px) scale(1.01); }
+            75% { transform: translateY(-1px) scale(1.02); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        /* Settings Modal Styles */
+        .settings-content {
+            padding: 30px 40px;
+            max-width: 450px;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--clay-shadow);
+            padding-bottom: 15px;
+        }
+
+        .settings-title {
+            font-family: 'Comfortaa', cursive;
+            font-size: 2em;
+            color: var(--primary-color);
+            margin: 0;
+            text-shadow: 2px 2px 4px var(--clay-shadow);
+        }
+
+        .close-btn {
+            font-size: 2.5em;
+            font-weight: 300;
+            color: var(--text-color);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .close-btn:hover {
+            transform: rotate(90deg) scale(1.1);
+            color: var(--error-color);
+        }
+
+        .settings-section {
+            margin-bottom: 30px;
+        }
+
+        .setting-category {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            text-shadow: 1px 1px 2px var(--clay-highlight);
+        }
+
+        .setting-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        #palette-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .setting-btn {
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: 3px solid var(--clay-shadow);
+            background: linear-gradient(145deg, var(--clay-base), var(--clay-highlight));
+            color: var(--text-color);
+            box-shadow: 6px 6px 12px var(--clay-shadow), -6px -6px 12px var(--clay-highlight);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .setting-btn.active {
+            background: linear-gradient(145deg, var(--primary-color), var(--accent-color));
+            color: var(--clay-highlight);
+            box-shadow: inset 6px 6px 12px var(--clay-shadow), inset -6px -6px 12px var(--clay-highlight);
+            transform: translateY(2px);
+        }
+
+        .palette-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .palette-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--clay-shadow);
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .setting-description {
+            font-size: 0.9em;
+            margin-top: 10px;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        /* Color Palettes */
+        .palette-ocean {
+            --bg-color: #e0f7fa;
+            --clay-base: #b2ebf2;
+            --clay-shadow: #4dd0e1;
+            --clay-highlight: #e0f7fa;
+            --text-color: #006064;
+            --primary-color: #00acc1;
+            --accent-color: #26c6da;
+        }
+        
+        .palette-forest {
+            --bg-color: #e8f5e9;
+            --clay-base: #c8e6c9;
+            --clay-shadow: #66bb6a;
+            --clay-highlight: #e8f5e9;
+            --text-color: #1b5e20;
+            --primary-color: #43a047;
+            --accent-color: #66bb6a;
+        }
+
+        .palette-sunset {
+            --bg-color: #fff3e0;
+            --clay-base: #ffe0b2;
+            --clay-shadow: #ffb74d;
+            --clay-highlight: #fff3e0;
+            --text-color: #e65100;
+            --primary-color: #ffa726;
+            --accent-color: #ffb74d;
+        }
+
+        .level-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 20px;
+        }
+
+        .difficulty-text {
+            font-size: 0.6em;
+            font-weight: 600;
+            margin-top: 2px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+
+        .difficulty-easy { color: #2980b9; }
+        .difficulty-normal { color: #27ae60; }
+        .difficulty-hard { color: #c0392b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ambient-particles">
+            <div class="ambient-particle"></div>
+            <div class="ambient-particle"></div>
+            <div class="ambient-particle"></div>
+            <div class="ambient-particle"></div>
+            <div class="ambient-particle"></div>
+        </div>
+        <div class="game-header">
+            <div class="score-container">Score: <span id="score" class="score-number">0</span></div>
+            <div class="level-container">
+                Level: <span id="level" class="level-number">1</span>
+                <span id="difficulty-display" class="difficulty-text">Normal</span>
+            </div>
+        </div>
+        <div class="game-area" id="game-area">
+            <div class="instructions" id="instructions">Replicate the gesture!</div>
+            <div class="gesture-display" id="gesture-display"></div>
+            <canvas id="gestureCanvas"></canvas>
+            <div id="feedback-container"></div>
+        </div>
+        <div class="timer-container">
+            <div class="progress-bar">
+                <div id="timer-bar"></div>
+            </div>
+        </div>
+        
+        <div id="start-screen" class="modal">
+            <div class="modal-content">
+                <h1>Gesture Master</h1>
+                <p>High Score: <span id="high-score">0</span></p>
+                <button id="start-btn" class="btn">Start Game</button>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Game Over</h2>
+                <p>Final Score: <span id="final-score">0</span></p>
+                <button id="restart-btn" class="btn">Restart</button>
+            </div>
+        </div>
+
+        <!-- New Home Screen -->
+        <div id="home-screen" class="modal home-screen">
+            <div class="home-content">
+                <div class="home-header">
+                    <h1 class="game-title">Clay Master</h1>
+                    <p class="game-subtitle">Shape Your Skills</p>
+                </div>
+                
+                <div class="home-buttons">
+                    <button id="play-btn" class="home-btn primary-home-btn">
+                        <span class="btn-text">Play</span>
+                        <div class="btn-clay-shine"></div>
+                    </button>
+                    
+                    <button id="settings-btn" class="home-btn secondary-home-btn">
+                        <span class="btn-text">Settings</span>
+                        <div class="btn-clay-shine"></div>
+                    </button>
+                </div>
+                
+                <div class="home-footer">
+                    <p class="high-score-display">Best Score: <span id="home-high-score">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const canvas = document.getElementById('gestureCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameArea = document.getElementById('game-area');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const timerBar = document.getElementById('timer-bar');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const highScoreEl = document.getElementById('high-score');
+        const finalScoreEl = document.getElementById('final-score');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const gestureDisplay = document.getElementById('gesture-display');
+        const instructions = document.getElementById('instructions');
+        const homeScreen = document.getElementById('home-screen');
+        const playBtn = document.getElementById('play-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const homeHighScoreEl = document.getElementById('home-high-score');
+        const difficultyDisplay = document.getElementById('difficulty-display');
+
+        let game_state = {
+            score: 0,
+            level: 1,
+            highScore: localStorage.getItem('gestureGameHighScore') || 0,
+            isDrawing: false,
+            touchPath: [],
+            currentGesture: null,
+            gameTimer: null,
+            timeLimit: 1200,
+            combo: 0,
+            completedPaths: [],
+            isRoundActive: false,
+        };
+
+        let audioContext;
+        let masterGain;
+
+        const GESTURES = {
+            SWIPE_UP: 'SWIPE_UP',
+            SWIPE_DOWN: 'SWIPE_DOWN',
+            SWIPE_LEFT: 'SWIPE_LEFT',
+            SWIPE_RIGHT: 'SWIPE_RIGHT',
+            CIRCLE_CW: 'CIRCLE_CW',
+            CIRCLE_CCW: 'CIRCLE_CCW'
+        };
+
+        const LEVEL_CONFIG = {
+            1: { gestures: ['SWIPE_UP', 'SWIPE_DOWN', 'SWIPE_LEFT', 'SWIPE_RIGHT'], time: 1200, points: 100 },
+            2: { gestures: ['SWIPE_UP', 'SWIPE_DOWN', 'SWIPE_LEFT', 'SWIPE_RIGHT'], time: 1000, points: 120 },
+            3: { gestures: ['SWIPE_UP', 'SWIPE_DOWN', 'SWIPE_LEFT', 'SWIPE_RIGHT', 'CIRCLE_CW', 'CIRCLE_CCW'], time: 900, points: 150 },
+            4: { gestures: ['SWIPE_UP', 'SWIPE_DOWN', 'SWIPE_LEFT', 'SWIPE_RIGHT', 'CIRCLE_CW', 'CIRCLE_CCW'], time: 800, points: 200 }
+        };
+
+        // Initialize Web Audio API for clay sounds
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioContext.createGain();
+                masterGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                masterGain.connect(audioContext.destination);
+            } catch (e) {
+                console.log('Web Audio API not supported');
+            }
+        }
+
+        function createClaySquishSound(frequency = 200, duration = 0.3) {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            // Create organic, muffled clay sound
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.5, audioContext.currentTime + duration);
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioContext.currentTime);
+            filter.Q.setValueAtTime(2, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(masterGain);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function createClayPopSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.1);
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1200, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(masterGain);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
+        function createClayMoldingSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(120, audioContext.currentTime + 0.2);
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(300, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(masterGain);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.4);
+        }
+
+        // Organic haptic feedback patterns
+        function organicVibrate(pattern) {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        function clayTouchVibration() {
+            // Soft, organic touch feedback
+            organicVibrate([30, 10, 20]);
+        }
+
+        function claySuccessVibration() {
+            // Satisfying success pattern
+            organicVibrate([40, 20, 60, 15, 80]);
+        }
+
+        function clayErrorVibration() {
+            // Gentle error feedback
+            organicVibrate([100, 50, 100, 30, 50]);
+        }
+
+        function clayLevelUpVibration() {
+            // Exciting level up pattern
+            organicVibrate([50, 30, 70, 20, 90, 15, 110]);
+        }
+
+        function clayGameOverVibration() {
+            // A more final and intense vibration for game over
+            organicVibrate([200, 100, 200]);
+        }
+
+        function resizeCanvas() {
+            canvas.width = gameArea.clientWidth;
+            canvas.height = gameArea.clientHeight;
+        }
+
+        function init() {
+            loadSettings();
+            resizeCanvas();
+            highScoreEl.textContent = game_state.highScore;
+            homeHighScoreEl.textContent = game_state.highScore;
+            
+            // Initialize audio
+            initAudio();
+            
+            // Set initial color palette
+            document.body.classList.add('level-1');
+            
+            // Show home screen first
+            showHomeScreen();
+            
+            // Home screen event listeners
+            playBtn.addEventListener('click', handlePlayButton);
+            settingsBtn.addEventListener('click', handleSettingsButton);
+            
+            startBtn.addEventListener('click', () => {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                startGame();
+            });
+            restartBtn.addEventListener('click', () => {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                startGame();
+            });
+            window.addEventListener('resize', resizeCanvas);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e.touches[0]); }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); }, { passive: false });
+            canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); }, { passive: false });
+            renderAll();
+            
+            // Start ambient animations
+            createAmbientEffects();
+
+            setupSettingsListeners();
+        }
+
+        function showHomeScreen() {
+            homeScreen.style.display = 'flex';
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+        }
+
+        function handlePlayButton() {
+            // Resume audio context on user interaction
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Add press animation
+            playBtn.classList.add('pressed');
+            
+            // Play clay squish sound
+            createClaySquishSound(250, 0.5);
+            claySuccessVibration();
+            
+            setTimeout(() => {
+                playBtn.classList.remove('pressed');
+                // Transition to start screen
+                homeScreen.classList.add('clay-morph-out');
+                setTimeout(() => {
+                    homeScreen.style.display = 'none';
+                    homeScreen.classList.remove('clay-morph-out');
+                    startScreen.style.display = 'flex';
+                    startScreen.classList.add('clay-morph-in');
+                    setTimeout(() => {
+                        startScreen.classList.remove('clay-morph-in');
+                    }, 800);
+                }, 800);
+            }, 300);
+        }
+
+        function handleSettingsButton() {
+            // Resume audio context on user interaction
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Add press animation
+            settingsBtn.classList.add('pressed');
+            
+            // Play clay pop sound
+            createClayPopSound();
+            clayTouchVibration();
+            
+            setTimeout(() => {
+                settingsBtn.classList.remove('pressed');
+                showSettingsModal();
+            }, 300);
+        }
+
+        function showSettingsModal() {
+            // Create a clay-themed modal for settings
+            const settingsModal = document.createElement('div');
+            settingsModal.id = 'settings-modal';
+            settingsModal.className = 'modal';
+            settingsModal.style.zIndex = '20';
+            settingsModal.innerHTML = `
+                <div class="modal-content settings-content">
+                    <div class="settings-header">
+                        <h2 class="settings-title">Settings</h2>
+                        <button id="close-settings-btn" class="close-btn">&times;</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="setting-category">Difficulty</h3>
+                        <div class="setting-options" id="difficulty-options">
+                            <button class="setting-btn" data-difficulty="1.2">Easy</button>
+                            <button class="setting-btn active" data-difficulty="1.0">Normal</button>
+                            <button class="setting-btn" data-difficulty="0.8">Hard</button>
+                        </div>
+                        <p class="setting-description">
+                            Adjusts the starting time for gestures.
+                            <br><strong>Note:</strong> Difficulty increases automatically as you score higher!
+                        </p>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="setting-category">Color Palette</h3>
+                        <div class="setting-options" id="palette-options">
+                            <button class="setting-btn palette-btn" data-palette="clay">
+                                <div class="palette-swatch" style="background-color: #e8d5c4;"></div>
+                                Clay
+                            </button>
+                            <button class="setting-btn palette-btn" data-palette="ocean">
+                                <div class="palette-swatch" style="background-color: #a2d5f2;"></div>
+                                Ocean
+                            </button>
+                            <button class="setting-btn palette-btn" data-palette="forest">
+                                <div class="palette-swatch" style="background-color: #a8d8b9;"></div>
+                                Forest
+                            </button>
+                            <button class="setting-btn palette-btn" data-palette="sunset">
+                                <div class="palette-swatch" style="background-color: #f8b195;"></div>
+                                Sunset
+                            </button>
+                        </div>
+                         <p class="setting-description">Changes the visual theme of the game.</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(settingsModal);
+            
+            // Clay-morph in animation
+            settingsModal.classList.add('clay-morph-in');
+            setTimeout(() => {
+                settingsModal.classList.remove('clay-morph-in');
+            }, 800);
+
+            // Add event listeners for the new modal
+            document.getElementById('close-settings-btn').addEventListener('click', () => {
+                settingsModal.classList.add('clay-morph-out');
+                setTimeout(() => {
+                    settingsModal.remove();
+                }, 800);
+            });
+
+            // Add logic for settings options
+            setupSettingsListeners();
+        }
+
+        function startGame() {
+            // Reset game state
+            game_state = {
+                ...game_state,
+                score: 0,
+                combo: 0,
+                isRoundActive: false,
+                touchPath: [],
+                completedPaths: [],
+            };
+            
+            updateScore(0, true);
+            updateLevel(1);
+            
+            startScreen.classList.add('clay-morph-out');
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                startScreen.classList.remove('clay-morph-out');
+            }, 800);
+            
+            gameOverScreen.style.display = 'none';
+            
+            // Delay the first round to allow screen transition
+            setTimeout(prepareRound, 500);
+        }
+
+        function prepareRound() {
+            clearCanvas();
+            game_state.completedPaths = [];
+            game_state.touchPath = [];
+            
+            // Hide gesture display until it's ready
+            gestureDisplay.style.opacity = '0';
+            
+            setTimeout(() => {
+                nextRound();
+            }, 100);
+        }
+        
+        function nextRound() {
+            const config = LEVEL_CONFIG[game_state.level] || LEVEL_CONFIG[Object.keys(LEVEL_CONFIG).length];
+            const availableGestures = config.gestures;
+            game_state.currentGesture = availableGestures[Math.floor(Math.random() * availableGestures.length)];
+
+            // Dynamic Difficulty based on score
+            let effectiveDifficulty = game_settings.difficulty;
+            if (game_state.score < 1000) {
+                // Use the EASIER of user's setting or Easy (1.2s)
+                effectiveDifficulty = Math.max(game_settings.difficulty, 1.2);
+            } else if (game_state.score >= 1000 && game_state.score < 2000) {
+                // Use the EASIER of user's setting or Normal (1.0s)
+                effectiveDifficulty = Math.max(game_settings.difficulty, 1.0);
+            } else {
+                // Score 2000+, lock to Hard difficulty
+                effectiveDifficulty = 0.8;
+            }
+
+            updateDifficultyDisplay(effectiveDifficulty);
+            game_state.timeLimit = config.time * effectiveDifficulty;
+            
+            showGestureDemo(game_state.currentGesture);
+            
+            // Morph in new gesture
+            gestureDisplay.style.animation = 'none';
+            setTimeout(() => {
+                gestureDisplay.style.opacity = '1';
+                gestureDisplay.style.animation = 'gestureAppear 0.6s ease-out';
+            }, 50);
+            
+            // Gentle instruction animation
+            instructions.style.animation = 'none';
+            instructions.style.opacity = '0';
+            setTimeout(() => {
+                instructions.style.animation = 'gentleFadeIn 0.8s ease-out forwards';
+                instructions.style.opacity = '1';
+            }, 200);
+            
+            startTimer();
+            game_state.isRoundActive = true;
+            createClayPopSound();
+        }
+
+        function startTimer() {
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            setTimeout(() => {
+                timerBar.style.transition = `width ${game_state.timeLimit / 1000}s linear`;
+                timerBar.style.width = '0%';
+            }, 50);
+
+            game_state.gameTimer = setTimeout(() => {
+                instructions.style.opacity = '0';
+                endRound(false);
+            }, game_state.timeLimit);
+        }
+        
+        function showGestureDemo(gesture) {
+            gestureDisplay.innerHTML = '';
+            let svg = '';
+
+            switch (gesture) {
+                case GESTURES.SWIPE_UP:
+                    svg = `<svg viewBox="0 0 100 100">
+                        <path class="gesture-path-outline" d="M50 85 Q50 82 50 75 Q50 50 50 25 Q50 22 50 20 M35 35 Q40 25 50 20 Q60 25 65 35"/>
+                        <path class="gesture-path" d="M50 85 Q50 82 50 75 Q50 50 50 25 Q50 22 50 20 M35 35 Q40 25 50 20 Q60 25 65 35"/>
+                    </svg>`;
+                    break;
+                case GESTURES.SWIPE_DOWN:
+                    svg = `<svg viewBox="0 0 100 100">
+                        <path class="gesture-path-outline" d="M50 15 Q50 18 50 25 Q50 50 50 75 Q50 78 50 80 M35 65 Q40 75 50 80 Q60 75 65 65"/>
+                        <path class="gesture-path" d="M50 15 Q50 18 50 25 Q50 50 50 75 Q50 78 50 80 M35 65 Q40 75 50 80 Q60 75 65 65"/>
+                    </svg>`;
+                    break;
+                case GESTURES.SWIPE_LEFT:
+                    svg = `<svg viewBox="0 0 100 100">
+                        <path class="gesture-path-outline" d="M85 50 Q82 50 75 50 Q50 50 25 50 Q22 50 20 50 M35 35 Q25 40 20 50 Q25 60 35 65"/>
+                        <path class="gesture-path" d="M85 50 Q82 50 75 50 Q50 50 25 50 Q22 50 20 50 M35 35 Q25 40 20 50 Q25 60 35 65"/>
+                    </svg>`;
+                    break;
+                case GESTURES.SWIPE_RIGHT:
+                    svg = `<svg viewBox="0 0 100 100">
+                        <path class="gesture-path-outline" d="M15 50 Q18 50 25 50 Q50 50 75 50 Q78 50 80 50 M65 35 Q75 40 80 50 Q75 60 65 65"/>
+                        <path class="gesture-path" d="M15 50 Q18 50 25 50 Q50 50 75 50 Q78 50 80 50 M65 35 Q75 40 80 50 Q75 60 65 65"/>
+                    </svg>`;
+                    break;
+                case GESTURES.CIRCLE_CW:
+                    svg = `<svg viewBox="0 0 100 100">
+                        <path class="gesture-path-outline" d="M 50, 85 Q 25 85 25 60 Q 25 35 50 35 Q 75 35 75 60 Q 75 75 65 80 L60 70 M75 60 Q70 65 65 70"/>
+                        <path class="gesture-path" d="M 50, 85 Q 25 85 25 60 Q 25 35 50 35 Q 75 35 75 60 Q 75 75 65 80 L60 70 M75 60 Q70 65 65 70"/>
+                    </svg>`;
+                    break;
+                case GESTURES.CIRCLE_CCW:
+                    svg = `<svg viewBox="0 0 100 100">
+                        <path class="gesture-path-outline" d="M 50, 85 Q 75 85 75 60 Q 75 35 50 35 Q 25 35 25 60 Q 25 75 35 80 L40 70 M25 60 Q30 65 35 70"/>
+                        <path class="gesture-path" d="M 50, 85 Q 75 85 75 60 Q 75 35 50 35 Q 25 35 25 60 Q 25 75 35 80 L40 70 M25 60 Q30 65 35 70"/>
+                    </svg>`;
+                    break;
+            }
+            gestureDisplay.innerHTML = svg;
+        }
+
+        function startDrawing(touch) {
+            if (game_state.isDrawing) return;
+            game_state.isDrawing = true;
+            instructions.style.opacity = '0';
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            game_state.touchPath.push({ x, y });
+            
+            // Create ripple effect at touch point
+            createRipple(x, y);
+            
+            // Soft touch feedback
+            clayTouchVibration();
+            createClayMoldingSound();
+        }
+
+        function draw(touch) {
+            if (!game_state.isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            game_state.touchPath.push({ x, y });
+            
+            // Occasionally create small ripples while drawing
+            if (Math.random() < 0.3) {
+                createRipple(x, y, 0.5);
+            }
+        }
+
+        function createRipple(x, y, scale = 1) {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = (x - 25 * scale) + 'px';
+            ripple.style.top = (y - 25 * scale) + 'px';
+            ripple.style.width = (50 * scale) + 'px';
+            ripple.style.height = (50 * scale) + 'px';
+            
+            gameArea.appendChild(ripple);
+            
+            setTimeout(() => {
+                try {
+                    if (ripple && ripple.parentNode) {
+                        ripple.parentNode.removeChild(ripple);
+                    }
+                } catch (error) {
+                    console.log('Ripple element already removed');
+                }
+            }, 800);
+        }
+
+        function createClayParticles(centerX, centerY) {
+            const particleCount = 12;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                const size = Math.random() < 0.3 ? 'small' : 
+                           Math.random() < 0.7 ? 'medium' : 'large';
+                particle.className = `clay-particle ${size}`;
+                
+                const angle = (i / particleCount) * Math.PI * 2;
+                const distance = 60 + Math.random() * 40;
+                const endX = centerX + Math.cos(angle) * distance;
+                const endY = centerY + Math.sin(angle) * distance;
+                
+                particle.style.left = centerX + 'px';
+                particle.style.top = centerY + 'px';
+                
+                gameArea.appendChild(particle);
+                
+                // Animate particle
+                const duration = 800 + Math.random() * 400;
+                const bounceHeight = 20 + Math.random() * 30;
+                
+                particle.animate([
+                    {
+                        transform: 'translate(0, 0) scale(1) rotate(0deg)',
+                        opacity: 1
+                    },
+                    {
+                        transform: `translate(${(endX - centerX) * 0.5}px, ${(endY - centerY) * 0.5 - bounceHeight}px) scale(1.2) rotate(180deg)`,
+                        opacity: 0.8,
+                        offset: 0.5
+                    },
+                    {
+                        transform: `translate(${endX - centerX}px, ${endY - centerY}px) scale(0.3) rotate(360deg)`,
+                        opacity: 0
+                    }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                });
+                
+                setTimeout(() => {
+                    try {
+                        if (particle && particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    } catch (error) {
+                        console.log('Particle element already removed');
+                    }
+                }, duration);
+            }
+        }
+
+        function createSquishEffect(x, y) {
+            const squish = document.createElement('div');
+            squish.className = 'squish-effect';
+            squish.style.left = (x - 60) + 'px';
+            squish.style.top = (y - 60) + 'px';
+            
+            gameArea.appendChild(squish);
+            
+            setTimeout(() => {
+                try {
+                    if (squish && squish.parentNode) {
+                        squish.parentNode.removeChild(squish);
+                    }
+                } catch (error) {
+                    console.log('Squish element already removed');
+                }
+            }, 800);
+        }
+
+        function renderAll() {
+            clearCanvas();
+
+            // Draw current user path
+            if (game_state.isDrawing && game_state.touchPath.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(game_state.touchPath[0].x, game_state.touchPath[0].y);
+                for (let i = 1; i < game_state.touchPath.length; i++) {
+                    ctx.lineTo(game_state.touchPath[i].x, game_state.touchPath[i].y);
+                }
+                ctx.strokeStyle = '#6d5dfc'; // Primary color
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+
+            // Draw and fade completed paths
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            for (let i = game_state.completedPaths.length - 1; i >= 0; i--) {
+                const p = game_state.completedPaths[i];
+                if (p.path.length < 2) continue;
+
+                ctx.beginPath();
+                ctx.moveTo(p.path[0].x, p.path[0].y);
+                for (let j = 1; j < p.path.length; j++) {
+                    ctx.lineTo(p.path[j].x, p.path[j].y);
+                }
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 8;
+                ctx.globalAlpha = p.opacity;
+                ctx.stroke();
+
+                p.opacity -= 0.02; // Fade out speed
+                if (p.opacity <= 0) {
+                    game_state.completedPaths.splice(i, 1);
+                }
+            }
+            ctx.globalAlpha = 1.0;
+
+            requestAnimationFrame(renderAll);
+        }
+
+        function stopDrawing() {
+            if (!game_state.isDrawing) return;
+            
+            // Stop timer immediately to prevent race conditions during evaluation
+            clearTimeout(game_state.gameTimer);
+            
+            game_state.isDrawing = false;
+            
+            if (game_state.touchPath.length > 1) {
+                game_state.completedPaths.push({ path: [...game_state.touchPath], opacity: 1, color: '#6d5dfc' });
+            }
+
+            evaluateGesture();
+            game_state.touchPath = [];
+        }
+
+        function evaluateGesture() {
+            if (game_state.touchPath.length < 2) { 
+                endRound(false);
+                return;
+            }
+
+            const startPoint = game_state.touchPath[0];
+            const endPoint = game_state.touchPath[game_state.touchPath.length - 1];
+            const dx = endPoint.x - startPoint.x;
+            const dy = endPoint.y - startPoint.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            let detectedGesture = null;
+
+            // Circle detection logic first
+            if (isCircle(game_state.touchPath)) {
+                detectedGesture = isClockwise(game_state.touchPath) ? GESTURES.CIRCLE_CW : GESTURES.CIRCLE_CCW;
+            } 
+            // Swipe detection logic - more forgiving ranges
+            else if (dist > 40) { // Reduced minimum distance
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                // More generous angle ranges (60 degrees each)
+                if (angle >= -120 && angle <= -60) detectedGesture = GESTURES.SWIPE_UP;
+                else if (angle >= 60 && angle <= 120) detectedGesture = GESTURES.SWIPE_DOWN;
+                else if (angle >= 150 || angle <= -150) detectedGesture = GESTURES.SWIPE_LEFT;
+                else if (angle >= -30 && angle <= 30) detectedGesture = GESTURES.SWIPE_RIGHT;
+            }
+            
+            const success = detectedGesture === game_state.currentGesture;
+            
+            // Debug logging for circle gestures
+            if (game_state.currentGesture === 'CIRCLE_CW' || game_state.currentGesture === 'CIRCLE_CCW') {
+                console.log('Gesture Evaluation Debug:', {
+                    currentGesture: game_state.currentGesture,
+                    detectedGesture,
+                    success,
+                    pathLength: game_state.touchPath.length,
+                    startEnd_distance: dist,
+                    isCircleDetected: isCircle(game_state.touchPath)
+                });
+            }
+
+            // Update the path color based on success/failure
+            if (game_state.completedPaths.length > 0) {
+                const lastPath = game_state.completedPaths[game_state.completedPaths.length - 1];
+                lastPath.color = success ? '#28a745' : '#dc3545'; // Green for success, red for failure
+            }
+
+            endRound(success);
+        }
+        
+        /**
+         * Checks if the drawn path is a circle.
+         * A path is considered a circle if its length is significant,
+         * the start and end points are close, and the path length to direct distance ratio is high.
+         * @param {Array<Object>} path - Array of {x, y} points.
+         * @returns {boolean}
+         */
+        function isCircle(path) {
+            // This detection is now extremely generous, focusing on intent over precision.
+            if (path.length < 8) return false;
+
+            const startPoint = path[0];
+            const endPoint = path[path.length - 1];
+            
+            const directDist = Math.sqrt(Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2));
+
+            // 1. The gesture must be a rough loop (start and end points are fairly close).
+            const isCloseLoop = directDist < 150; // Very generous closing distance.
+
+            if (!isCloseLoop) return false;
+
+            let pathLength = 0;
+            for(let i = 1; i < path.length; i++) {
+                pathLength += Math.sqrt(Math.pow(path[i].x - path[i-1].x, 2) + Math.pow(path[i].y - path[i-1].y, 2));
+            }
+
+            // 2. The path must be loopy and not just a short wiggle.
+            // It checks if the path traveled is significantly longer than a straight line 
+            // between the start and end points.
+            const isLoopy = pathLength > 80 && pathLength / (directDist + 1) > 1.3;
+
+            return isLoopy;
+        }
+
+        /**
+         * Determines if a path was drawn clockwise using the shoelace formula concept.
+         * Sums the cross-products of vectors between consecutive points.
+         * A positive sum indicates a clockwise direction.
+         * @param {Array<Object>} path - Array of {x, y} points.
+         * @returns {boolean}
+         */
+        function isClockwise(path) {
+            if (path.length < 6) return true; // Default to clockwise for very short paths
+            
+            let totalAngle = 0;
+            const step = Math.max(1, Math.floor(path.length / 20)); // Sample fewer points for stability
+            
+            for (let i = step; i < path.length - step; i += step) {
+                const p1 = path[i - step];
+                const p2 = path[i];
+                const p3 = path[i + step < path.length ? i + step : path.length - 1];
+                
+                // Use cross product to determine turn direction
+                const crossProduct = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+                totalAngle += crossProduct;
+            }
+            
+            const result = totalAngle > 0;
+            
+            // Debug logging for troubleshooting
+            if (game_state.currentGesture === 'CIRCLE_CW' || game_state.currentGesture === 'CIRCLE_CCW') {
+                console.log('Clockwise Detection Debug:', {
+                    totalAngle,
+                    detectedClockwise: result,
+                    expectedGesture: game_state.currentGesture
+                });
+            }
+            
+            return result;
+        }
+
+        function endRound(success) {
+            if (!game_state.isRoundActive) return; // Prevent multiple calls
+            game_state.isRoundActive = false;
+            
+            clearTimeout(game_state.gameTimer); // Also clear here for safety.
+            showFeedback(success);
+            instructions.style.opacity = '0';
+
+            if (success) {
+                game_state.combo++;
+                const config = LEVEL_CONFIG[game_state.level] || LEVEL_CONFIG[Object.keys(LEVEL_CONFIG).length];
+                const points = config.points + (game_state.combo > 1 ? (game_state.combo - 1) * 10 : 0);
+                updateScore(points);
+                
+                // Create celebration effects
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                createSquishEffect(centerX, centerY);
+                createClayParticles(centerX, centerY);
+                
+                // Success feedback
+                claySuccessVibration();
+                createClaySquishSound(300, 0.4);
+                
+                const didLevelUp = game_state.score >= game_state.level * 500;
+                
+                if (didLevelUp) {
+                    updateLevel(game_state.level + 1);
+                    showFeedbackText(`Level Up!`);
+                    gameArea.classList.add('level-up-flash');
+                    setTimeout(() => gameArea.classList.remove('level-up-flash'), 800);
+                    clayLevelUpVibration();
+                    
+                    // Allow extra time for level up animations to complete
+                    setTimeout(prepareRound, 1000); // Shortened delay
+                } else {
+                    setTimeout(prepareRound, 500); // Shortened delay
+                }
+            } else {
+                game_state.combo = 0;
+                clayErrorVibration();
+                setTimeout(gameOver, 1000);
+            }
+        }
+        
+        function showFeedback(success) {
+            gameArea.style.backgroundColor = success ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)';
+            setTimeout(() => {
+                gameArea.style.backgroundColor = 'transparent';
+            }, 300);
+
+            const feedbackEl = document.createElement('div');
+            feedbackEl.textContent = success ? `+${(LEVEL_CONFIG[game_state.level] || LEVEL_CONFIG[4]).points}` : 'Oops!';
+            feedbackEl.className = `feedback-text ${success ? 'correct' : 'incorrect'}`;
+            feedbackContainer.appendChild(feedbackEl);
+            
+            if (success && game_state.combo > 1) {
+                const comboEl = document.createElement('div');
+                comboEl.textContent = `x${game_state.combo} Combo!`;
+                comboEl.className = `feedback-text correct`;
+                comboEl.style.top = '60%';
+                comboEl.style.fontSize = '1.5em';
+                feedbackContainer.appendChild(comboEl);
+            }
+
+            // Clear all feedback elements safely
+            setTimeout(() => {
+                while (feedbackContainer.firstChild) {
+                    feedbackContainer.removeChild(feedbackContainer.firstChild);
+                }
+            }, 800);
+        }
+
+        function showFeedbackText(text) {
+            const el = document.createElement('div');
+            el.textContent = text;
+            el.className = 'feedback-text correct';
+            el.style.color = 'var(--primary-color)';
+            feedbackContainer.appendChild(el);
+            
+            // Safe removal with existence check
+            setTimeout(() => {
+                try {
+                    if (el && el.parentNode === feedbackContainer) {
+                        feedbackContainer.removeChild(el);
+                    }
+                } catch (error) {
+                    console.log('Feedback element already removed');
+                }
+            }, 1200);
+        }
+
+        function gameOver() {
+            clayGameOverVibration();
+            gameArea.classList.add('game-over-flash');
+            setTimeout(() => {
+                gameArea.classList.remove('game-over-flash');
+            }, 500);
+            
+            if (game_state.score > game_state.highScore) {
+                game_state.highScore = game_state.score;
+                localStorage.setItem('gestureGameHighScore', game_state.highScore);
+                highScoreEl.textContent = game_state.highScore;
+            }
+            finalScoreEl.textContent = game_state.score;
+            
+            // Clay-morph in the game over screen
+            setTimeout(() => {
+                gameOverScreen.style.display = 'flex';
+                gameOverScreen.classList.add('clay-morph-in');
+                setTimeout(() => {
+                    gameOverScreen.classList.remove('clay-morph-in');
+                }, 800);
+            }, 500);
+        }
+
+        function updateScore(points, absolute = false) {
+            const oldScore = game_state.score;
+            if (absolute) {
+                game_state.score = points;
+            } else {
+                game_state.score += points;
+            }
+            
+            if (game_state.score !== oldScore) {
+                animateNumber(scoreEl, oldScore, game_state.score, 'score-number');
+            }
+        }
+
+        function updateLevel(lvl) {
+            const oldLevel = game_state.level;
+            
+            if (lvl !== oldLevel) {
+                game_state.level = lvl;
+                animateNumber(levelEl, oldLevel, game_state.level, 'level-number');
+                triggerColorPaletteChange(game_state.level);
+            }
+        }
+
+        function triggerColorPaletteChange(newLevel) {
+            // Add color morphing animation to container
+            const container = document.querySelector('.container');
+            container.classList.add('color-morph');
+            
+            // Remove old level classes
+            document.body.classList.remove('level-1', 'level-2', 'level-3', 'level-4', 'level-5-plus');
+            
+            // Add new level class based on level
+            const levelClass = newLevel >= 5 ? 'level-5-plus' : `level-${newLevel}`;
+            document.body.classList.add(levelClass);
+            
+            // Create color transition ripple effect
+            createColorRipple();
+            
+            // Remove color-morph class after animation
+            setTimeout(() => {
+                container.classList.remove('color-morph');
+            }, 2000);
+            
+            // Update floating dust particles with new colors
+            updateAmbientColors();
+        }
+
+        function createColorRipple() {
+            const ripple = document.createElement('div');
+            ripple.style.position = 'absolute';
+            ripple.style.top = '50%';
+            ripple.style.left = '50%';
+            ripple.style.width = '20px';
+            ripple.style.height = '20px';
+            ripple.style.borderRadius = '50%';
+            ripple.style.background = `radial-gradient(circle, var(--primary-color), transparent 70%)`;
+            ripple.style.pointerEvents = 'none';
+            ripple.style.zIndex = '5';
+            ripple.style.transform = 'translate(-50%, -50%)';
+            
+            gameArea.appendChild(ripple);
+            
+            ripple.animate([
+                {
+                    transform: 'translate(-50%, -50%) scale(0)',
+                    opacity: 0.8
+                },
+                {
+                    transform: 'translate(-50%, -50%) scale(8)',
+                    opacity: 0
+                }
+            ], {
+                duration: 1500,
+                easing: 'ease-out'
+            });
+            
+            setTimeout(() => {
+                try {
+                    if (ripple && ripple.parentNode) {
+                        ripple.parentNode.removeChild(ripple);
+                    }
+                } catch (error) {
+                    console.log('Ripple element already removed');
+                }
+            }, 1500);
+        }
+
+        function updateAmbientColors() {
+            // Update existing floating dust particles to use new colors
+            const existingDust = gameArea.querySelectorAll('[style*="rgba("]');
+            existingDust.forEach(dust => {
+                if (dust.style.background.includes('radial-gradient')) {
+                    const currentLevel = game_state.level >= 5 ? 5 : game_state.level;
+                    const colors = {
+                        1: 'rgba(205, 133, 63, 0.3)',
+                        2: 'rgba(230, 126, 34, 0.3)',
+                        3: 'rgba(231, 76, 60, 0.3)',
+                        4: 'rgba(211, 84, 0, 0.3)',
+                        5: 'rgba(183, 71, 42, 0.3)'
+                    };
+                    const newColor = colors[currentLevel];
+                    dust.style.background = `radial-gradient(circle, ${newColor}, transparent 70%)`;
+                }
+            });
+        }
+
+        function createFloatingDust() {
+            const dust = document.createElement('div');
+            dust.style.position = 'absolute';
+            dust.style.width = (2 + Math.random() * 3) + 'px';
+            dust.style.height = (2 + Math.random() * 3) + 'px';
+            
+            // Use current level's color palette
+            const currentLevel = game_state.level >= 5 ? 5 : game_state.level;
+            const colors = {
+                1: { r: 205, g: 133, b: 63 },
+                2: { r: 230, g: 126, b: 34 },
+                3: { r: 231, g: 76, b: 60 },
+                4: { r: 211, g: 84, b: 0 },
+                5: { r: 183, g: 71, b: 42 }
+            };
+            
+            const color = colors[currentLevel];
+            const variation = 20;
+            const r = Math.max(0, Math.min(255, color.r + (Math.random() - 0.5) * variation));
+            const g = Math.max(0, Math.min(255, color.g + (Math.random() - 0.5) * variation));
+            const b = Math.max(0, Math.min(255, color.b + (Math.random() - 0.5) * variation));
+            
+            dust.style.background = `radial-gradient(circle, rgba(${r}, ${g}, ${b}, 0.3), transparent 70%)`;
+            dust.style.borderRadius = '50%';
+            dust.style.left = Math.random() * 100 + '%';
+            dust.style.top = '100%';
+            dust.style.pointerEvents = 'none';
+            dust.style.zIndex = '0';
+            
+            gameArea.appendChild(dust);
+            
+            const duration = 8000 + Math.random() * 4000;
+            dust.animate([
+                {
+                    transform: 'translateY(0) scale(0.5) rotate(0deg)',
+                    opacity: 0
+                },
+                {
+                    transform: `translateY(-${gameArea.clientHeight + 50}px) scale(1) rotate(360deg)`,
+                    opacity: 0.6,
+                    offset: 0.5
+                },
+                {
+                    transform: `translateY(-${gameArea.clientHeight + 100}px) scale(0.3) rotate(720deg)`,
+                    opacity: 0
+                }
+            ], {
+                duration: duration,
+                easing: 'linear'
+            });
+            
+            setTimeout(() => {
+                try {
+                    if (dust && dust.parentNode) {
+                        dust.parentNode.removeChild(dust);
+                    }
+                } catch (error) {
+                    console.log('Dust element already removed');
+                }
+            }, duration);
+        }
+
+        function animateNumber(element, from, to, className) {
+            const duration = 600;
+            const startTime = performance.now();
+            const difference = to - from;
+            
+            // Add bounce class
+            element.classList.add('bounce');
+            setTimeout(() => element.classList.remove('bounce'), 600);
+
+            function easeOutBounce(t) {
+                if (t < 1 / 2.75) {
+                    return 7.5625 * t * t;
+                } else if (t < 2 / 2.75) {
+                    return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+                } else if (t < 2.5 / 2.75) {
+                    return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+                } else {
+                    return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+                }
+            }
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeOutBounce(progress);
+                
+                const currentValue = Math.round(from + (difference * easedProgress));
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function createAmbientEffects() {
+            // Add random floating clay dust particles
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    createFloatingDust();
+                }
+            }, 2000);
+        }
+
+        let game_settings = {
+            difficulty: 1.0, // 1.2 for easy, 1.0 for normal, 0.8 for hard
+            palette: 'clay'
+        };
+
+        function saveSettings() {
+            localStorage.setItem('gestureGameSettings', JSON.stringify(game_settings));
+        }
+
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('gestureGameSettings');
+            if (savedSettings) {
+                game_settings = JSON.parse(savedSettings);
+                applyPalette(game_settings.palette);
+            }
+        }
+
+        function applyPalette(paletteName) {
+            document.body.classList.remove('palette-ocean', 'palette-forest', 'palette-sunset');
+            if (paletteName !== 'clay') {
+                document.body.classList.add(`palette-${paletteName}`);
+            }
+        }
+
+        function setupSettingsListeners() {
+            const difficultyContainer = document.getElementById('difficulty-options');
+            difficultyContainer.addEventListener('click', (e) => {
+                if (e.target.matches('.setting-btn')) {
+                    const currentActive = difficultyContainer.querySelector('.active');
+                    if (currentActive) currentActive.classList.remove('active');
+                    e.target.classList.add('active');
+                    game_settings.difficulty = parseFloat(e.target.dataset.difficulty);
+                    saveSettings();
+                }
+            });
+
+            const paletteContainer = document.getElementById('palette-options');
+            paletteContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.setting-btn');
+                if (button) {
+                    const currentActive = paletteContainer.querySelector('.active');
+                    if (currentActive) currentActive.classList.remove('active');
+                    button.classList.add('active');
+                    game_settings.palette = button.dataset.palette;
+                    applyPalette(game_settings.palette);
+                    saveSettings();
+                }
+            });
+
+            // Set active buttons based on loaded settings
+            const activeDifficulty = difficultyContainer.querySelector(`[data-difficulty="${game_settings.difficulty}"]`);
+            if (activeDifficulty) activeDifficulty.classList.add('active');
+
+            const activePalette = paletteContainer.querySelector(`[data-palette="${game_settings.palette}"]`);
+            if (activePalette) activePalette.classList.add('active');
+        }
+
+        function updateDifficultyDisplay(difficulty) {
+            let text = 'Normal';
+            let difficultyClass = 'difficulty-normal';
+
+            if (difficulty >= 1.2) {
+                text = 'Easy';
+                difficultyClass = 'difficulty-easy';
+            } else if (difficulty < 1.0) {
+                text = 'Hard';
+                difficultyClass = 'difficulty-hard';
+            }
+            
+            difficultyDisplay.textContent = text;
+            difficultyDisplay.className = `difficulty-text ${difficultyClass}`;
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
